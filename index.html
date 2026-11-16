@@ -1,931 +1,158 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Diário da Diana</title>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
-
 <style>
-* { box-sizing: border-box; }
-
-body {
-    margin: 0;
-    padding: 16px;
-    background: #f4f6f1;
-    font-family: Arial, sans-serif;
-    color: #26352d;
-}
-
-.container {
-    max-width: 600px;
-    margin: 20px auto;
-}
-
-header, .card {
-    background: white;
-    padding: 22px;
-    border-radius: 15px;
-    margin-bottom: 18px;
-    box-shadow: 0 2px 10px #00000008;
-}
-
-header { text-align: center; }
-header h1 { margin: 0 0 8px; }
-header p { color: #718078; margin: 0; }
-
-h2 { margin-top: 0; }
-
-button, input, select, textarea {
-    width: 100%;
-    padding: 13px;
-    margin: 7px 0;
-    border-radius: 8px;
-    font-size: 15px;
-}
-
-input, select, textarea {
-    border: 1px solid #d5ddd7;
-    background: white;
-    color: #26352d;
-}
-
-textarea {
-    min-height: 85px;
-    resize: vertical;
-}
-
-button {
-    border: none;
-    background: #477c64;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-button:disabled { opacity: .5; }
-
-.secondary {
-    background: #e9f0eb;
-    color: #315a43;
-}
-
-.report-button {
-    background: #477c64;
-    color: white;
-    padding: 16px;
-    font-size: 16px;
-}
-
-.danger { background: #a44d4d; }
-
-.users {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-}
-
-.user-button {
-    background: #e9f0eb;
-    color: #315a43;
-    padding: 25px 10px;
-    font-size: 18px;
-}
-
-.user-button span {
-    display: block;
-    font-size: 35px;
-    margin-bottom: 8px;
-}
-
-#dashboard { display: none; }
-
-.tabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 15px;
-}
-
-.tabs button {
-    background: #e9f0eb;
-    color: #315a43;
-}
-
-.tabs button.active {
-    background: #477c64;
-    color: white;
-}
-
-.entry {
-    border-left: 4px solid #477c64;
-    padding: 12px;
-    margin: 12px 0;
-    background: #f5f8f5;
-    border-radius: 8px;
-    overflow-wrap: anywhere;
-}
-
-.entry h3 { margin: 0 0 8px; }
-
-.entry small { color: #718078; }
-.entry p { margin: 7px 0; }
-
-.entry button {
-    padding: 8px;
-    font-size: 13px;
-}
-
-#message {
-    display: none;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    overflow-wrap: anywhere;
-}
-
-label {
-    display: block;
-    font-weight: bold;
-    margin-top: 12px;
-    font-size: 14px;
-}
-
-.user-info {
-    color: #477c64;
-    font-weight: bold;
-    text-align: center;
-}
-
-.hidden { display: none; }
-
-.report-period {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-
-.report-period label {
-    font-size: 13px;
-}
-
-.report-info {
-    font-size: 13px;
-    color: #718078;
-    line-height: 1.5;
-}
-
+*{box-sizing:border-box}body{margin:0;padding:16px;background:#f4f6f1;font-family:Arial,sans-serif;color:#26352d}
+.container{max-width:600px;margin:20px auto}header,.card{background:white;padding:22px;border-radius:15px;margin-bottom:18px;box-shadow:0 2px 10px #00000008}
+header{text-align:center}header h1{margin:0 0 8px}header p{color:#718078;margin:0}h2{margin-top:0}
+button,input,select,textarea{width:100%;padding:13px;margin:7px 0;border-radius:8px;font-size:15px}
+input,select,textarea{border:1px solid #d5ddd7;background:white;color:#26352d}textarea{min-height:85px;resize:vertical}
+button{border:0;background:#477c64;color:white;font-weight:bold;cursor:pointer}button:disabled{opacity:.5}
+.secondary{background:#e9f0eb;color:#315a43}.danger{background:#a44d4d}
+.users{display:grid;grid-template-columns:1fr 1fr;gap:12px}.user-button{background:#e9f0eb;color:#315a43;padding:25px 10px;font-size:18px}
+.user-button span{display:block;font-size:35px;margin-bottom:8px}#dashboard{display:none}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:15px}.tabs button{background:#e9f0eb;color:#315a43}.tabs button.active{background:#477c64;color:white}
+.entry{border-left:4px solid #477c64;padding:12px;margin:12px 0;background:#f5f8f5;border-radius:8px;overflow-wrap:anywhere}
+.entry h3{margin:0 0 8px}.entry small{color:#718078}.entry p{margin:7px 0}.entry button{padding:8px;font-size:13px}
+#message{display:none;padding:12px;border-radius:8px;margin-bottom:12px;overflow-wrap:anywhere}
+label{display:block;font-weight:bold;margin-top:12px;font-size:14px}.user-info{color:#477c64;font-weight:bold;text-align:center}.hidden{display:none}
+.report-period{display:grid;grid-template-columns:1fr 1fr;gap:10px}.report-info{font-size:13px;color:#718078;line-height:1.5}
+@media(max-width:380px){.report-period{grid-template-columns:1fr}}
 </style>
 </head>
-
 <body>
-
 <div class="container">
-
-<header>
-    <h1>📖 Diário da Diana</h1>
-    <p>Registro alimentar e intestinal ❤️</p>
-</header>
-
+<header><h1>📖 Diário da Diana</h1><p>Registro alimentar e intestinal ❤️</p></header>
 <div id="selection" class="card">
-
-    <h2 style="text-align:center">Quem está acessando?</h2>
-
-    <div class="users">
-        <button class="user-button" onclick="selectUser('Silas')">
-            <span>👨</span>Silas
-        </button>
-
-        <button class="user-button" onclick="selectUser('Flávia')">
-            <span>👩</span>Flávia
-        </button>
-    </div>
-
-</div>
-
+<h2 style="text-align:center">Quem está acessando?</h2>
+<div class="users">
+<button class="user-button" onclick="selectUser('Silas')"><span>👨</span>Silas</button>
+<button class="user-button" onclick="selectUser('Flávia')"><span>👩</span>Flávia</button>
+</div></div>
 <div id="dashboard">
-
-    <div class="card">
-        <p class="user-info">
-            Diário da Diana · <span id="userName"></span>
-        </p>
-
-        <button class="secondary" onclick="changeUser()">
-            Trocar usuário
-        </button>
-    </div>
-
-    <div class="card">
-
-        <h2>📝 Novo registro</h2>
-
-        <div class="tabs">
-            <button id="foodTab" class="active"
-                onclick="changeType('food')">
-                🍎 Alimentação
-            </button>
-
-            <button id="stoolTab"
-                onclick="changeType('stool')">
-                💩 Evacuação
-            </button>
-        </div>
-
-        <div id="message"></div>
-
-        <form id="entryForm">
-
-            <label>Data</label>
-            <input type="date" id="entryDate" required>
-
-            <label>Horário</label>
-            <input type="time" id="entryTime" required>
-
-            <div id="foodFields">
-
-                <label>Tipo de refeição</label>
-                <select id="mealType">
-                    <option value="Café da manhã">Café da manhã</option>
-                    <option value="Lanche da manhã">Lanche da manhã</option>
-                    <option value="Almoço">Almoço</option>
-                    <option value="Lanche da tarde">Lanche da tarde</option>
-                    <option value="Jantar">Jantar</option>
-                    <option value="Ceia">Ceia</option>
-                    <option value="Mamadeira">Mamadeira</option>
-                    <option value="Outro">Outro</option>
-                </select>
-
-                <label>Alimentos consumidos</label>
-                <textarea id="foodDescription"
-                    placeholder="Ex: arroz, feijão, frango e cenoura"></textarea>
-
-                <label>Quantidade aproximada</label>
-                <input id="foodQuantity"
-                    placeholder="Ex: 3 colheres, 150 ml">
-
-            </div>
-
-            <div id="stoolFields" class="hidden">
-
-                <label>Consistência das fezes</label>
-                <select id="consistency">
-                    <option value="Formadas">Formadas</option>
-                    <option value="Pastosas">Pastosas</option>
-                    <option value="Líquidas">Líquidas</option>
-                    <option value="Duras">Duras</option>
-                    <option value="Ressecadas / bolinhas">Ressecadas / bolinhas</option>
-                </select>
-
-                <label>Cor</label>
-                <select id="stoolColor">
-                    <option value="Marrom">Marrom</option>
-                    <option value="Amarelada">Amarelada</option>
-                    <option value="Esverdeada">Esverdeada</option>
-                    <option value="Clara">Clara</option>
-                    <option value="Escura">Escura</option>
-                    <option value="Avermelhada">Avermelhada</option>
-                    <option value="Outra">Outra</option>
-                </select>
-
-                <label>Quantidade</label>
-                <select id="stoolQuantity">
-                    <option value="Pequena">Pequena</option>
-                    <option value="Média">Média</option>
-                    <option value="Grande">Grande</option>
-                </select>
-
-                <label>Muco ou sangue?</label>
-                <select id="symptoms">
-                    <option value="Nenhum">Nenhum</option>
-                    <option value="Muco">Muco</option>
-                    <option value="Sangue">Sangue</option>
-                    <option value="Muco e sangue">Muco e sangue</option>
-                </select>
-
-            </div>
-
-            <label>Observações</label>
-            <textarea id="notes"
-                placeholder="Outras informações importantes..."></textarea>
-
-            <button type="submit" id="saveButton">
-                Salvar registro
-            </button>
-
-        </form>
-
-    </div>
-
-    <!-- NOVA ÁREA DE RELATÓRIOS -->
-
-    <div class="card">
-
-        <h2>📊 Relatórios da Diana</h2>
-
-        <p class="report-info">
-            Selecione o período desejado para gerar um relatório
-            completo dos registros alimentares e intestinais.
-        </p>
-
-        <div class="report-period">
-
-            <div>
-                <label>Data inicial</label>
-                <input type="date" id="reportStart">
-            </div>
-
-            <div>
-                <label>Data final</label>
-                <input type="date" id="reportEnd">
-            </div>
-
-        </div>
-
-        <button class="report-button"
-            id="generateReportButton"
-            onclick="generateReport()">
-
-            📄 Gerar relatório em PDF
-
-        </button>
-
-        <p class="report-info">
-            O relatório incluirá alimentação, evacuações,
-            observações, horários e responsáveis pelos registros.
-        </p>
-
-        <div id="reportMessage" class="report-info"></div>
-
-    </div>
-
-    <div class="card">
-
-        <h2>📚 Histórico</h2>
-
-        <button class="secondary" onclick="loadEntries()">
-            🔄 Atualizar histórico
-        </button>
-
-        <div id="history">
-            Carregando registros...
-        </div>
-
-    </div>
-
+<div class="card"><p class="user-info">Diário da Diana · <span id="userName"></span></p><button class="secondary" onclick="changeUser()">Trocar usuário</button></div>
+<div class="card">
+<h2>📝 Novo registro</h2>
+<div class="tabs">
+<button id="foodTab" class="active" type="button" onclick="changeType('food')">🍎 Alimentação</button>
+<button id="stoolTab" type="button" onclick="changeType('stool')">💩 Evacuação</button>
 </div>
-
+<div id="message"></div>
+<form id="entryForm">
+<label>Data</label><input type="date" id="entryDate" required>
+<label>Horário</label><input type="time" id="entryTime" required>
+<div id="foodFields">
+<label>Tipo de refeição</label><select id="mealType">
+<option>Café da manhã</option><option>Lanche da manhã</option><option>Almoço</option><option>Lanche da tarde</option><option>Jantar</option><option>Ceia</option><option>Mamadeira</option><option>Outro</option></select>
+<label>Alimentos consumidos</label><textarea id="foodDescription" placeholder="Ex: arroz, feijão, frango e cenoura"></textarea>
+<label>Quantidade aproximada</label><input id="foodQuantity" placeholder="Ex: 3 colheres, 150 ml">
 </div>
+<div id="stoolFields" class="hidden">
+<label>Consistência das fezes</label><select id="consistency"><option>Formadas</option><option>Pastosas</option><option>Líquidas</option><option>Duras</option><option>Ressecadas / bolinhas</option></select>
+<label>Cor</label><select id="stoolColor"><option>Marrom</option><option>Amarelada</option><option>Esverdeada</option><option>Clara</option><option>Escura</option><option>Avermelhada</option><option>Outra</option></select>
+<label>Quantidade</label><select id="stoolQuantity"><option>Pequena</option><option selected>Média</option><option>Grande</option></select>
+<label>Muco ou sangue?</label><select id="symptoms"><option>Nenhum</option><option>Muco</option><option>Sangue</option><option>Muco e sangue</option></select>
+</div>
+<label>Observações</label><textarea id="notes" placeholder="Outras informações importantes..."></textarea>
+<button type="submit" id="saveButton">Salvar registro</button>
+</form></div>
+<div class="card">
+<h2>📊 Relatório da Diana</h2>
+<p class="report-info">Selecione o período. O relatório reúne os registros de Silas e Flávia e permite imprimir ou salvar em PDF.</p>
+<div class="report-period">
+<div><label for="reportStart">Data inicial</label><input type="date" id="reportStart"></div>
+<div><label for="reportEnd">Data final</label><input type="date" id="reportEnd"></div>
+</div>
+<button id="generateReportButton" type="button" onclick="generateReport()">📄 Gerar relatório</button>
+<div id="reportMessage" class="report-info" aria-live="polite"></div>
+</div>
+<div class="card"><h2>📚 Histórico</h2><button class="secondary" type="button" onclick="loadEntries()">🔄 Atualizar histórico</button><div id="history">Carregando registros...</div></div>
+</div></div>
 
 <script>
+const SUPABASE_URL="https://usjfxujtvzsyccuplwtv.supabase.co";
+const SUPABASE_KEY="sb_publishable_nwGlDWcWFP2-uFH50_ZZLA_UklPEf7M";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let currentUser=null,currentType="food";
+const selection=document.getElementById("selection"),dashboard=document.getElementById("dashboard");
+const foodFields=document.getElementById("foodFields"),stoolFields=document.getElementById("stoolFields");
+const historyEl=document.getElementById("history");
 
-// SUPABASE
+function localDateString(date=new Date()){const d=new Date(date.getTime()-date.getTimezoneOffset()*60000);return d.toISOString().slice(0,10)}
+function setDateTime(){const now=new Date(),today=localDateString(now);document.getElementById("entryDate").value=today;document.getElementById("entryTime").value=now.toTimeString().slice(0,5);document.getElementById("reportStart").value=today.slice(0,8)+"01";document.getElementById("reportEnd").value=today}
+function selectUser(name){currentUser=name;localStorage.setItem("diario_usuario",name);document.getElementById("userName").textContent=name;selection.style.display="none";dashboard.style.display="block";setDateTime();loadEntries()}
+function changeUser(){currentUser=null;localStorage.removeItem("diario_usuario");dashboard.style.display="none";selection.style.display="block"}
+function changeType(type){currentType=type;foodFields.classList.toggle("hidden",type!=="food");stoolFields.classList.toggle("hidden",type!=="stool");document.getElementById("foodTab").classList.toggle("active",type==="food");document.getElementById("stoolTab").classList.toggle("active",type==="stool")}
+function showMessage(text,success=false){const box=document.getElementById("message");box.style.display="block";box.style.background=success?"#e0f3e5":"#ffe5e5";box.style.color=success?"#245d36":"#9b2525";box.textContent=text}
+function escapeHTML(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function formatDate(date){if(!date)return "-";const p=String(date).split("-");return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:date}
 
-const SUPABASE_URL =
-"https://usjfxujtvzsyccuplwtv.supabase.co";
-
-const SUPABASE_KEY =
-"sb_publishable_nwGlDWcWFP2-uFH50_ZZLA_UklPEf7M";
-
-const db = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
-
-// ESTADO
-
-let currentUser = null;
-let currentType = "food";
-
-// ELEMENTOS
-
-const selection = document.getElementById("selection");
-const dashboard = document.getElementById("dashboard");
-const foodFields = document.getElementById("foodFields");
-const stoolFields = document.getElementById("stoolFields");
-const history = document.getElementById("history");
-
-// DATA E HORA
-
-function localDateString(date) {
-    const local = new Date(
-        date.getTime() - date.getTimezoneOffset() * 60000
-    );
-    return local.toISOString().slice(0, 10);
-}
-
-function setDateTime() {
-    const now = new Date();
-    const date = localDateString(now);
-
-    document.getElementById("entryDate").value = date;
-    document.getElementById("entryTime").value =
-        now.toTimeString().slice(0, 5);
-
-    // Período padrão: mês atual
-    document.getElementById("reportStart").value =
-        date.slice(0, 8) + "01";
-
-    document.getElementById("reportEnd").value = date;
-}
-
-// USUÁRIO
-
-function selectUser(name) {
-    currentUser = name;
-
-    localStorage.setItem("diario_usuario", name);
-
-    document.getElementById("userName").textContent = name;
-
-    selection.style.display = "none";
-    dashboard.style.display = "block";
-
-    setDateTime();
-    loadEntries();
-}
-
-function changeUser() {
-    currentUser = null;
-
-    localStorage.removeItem("diario_usuario");
-
-    dashboard.style.display = "none";
-    selection.style.display = "block";
-}
-
-// TIPO DE REGISTRO
-
-function changeType(type) {
-    currentType = type;
-
-    foodFields.classList.toggle("hidden", type !== "food");
-    stoolFields.classList.toggle("hidden", type !== "stool");
-
-    document.getElementById("foodTab")
-        .classList.toggle("active", type === "food");
-
-    document.getElementById("stoolTab")
-        .classList.toggle("active", type === "stool");
-}
-
-// MENSAGENS
-
-function showMessage(text, success = false) {
-    const box = document.getElementById("message");
-
-    box.style.display = "block";
-    box.style.background = success ? "#e0f3e5" : "#ffe5e5";
-    box.style.color = success ? "#245d36" : "#9b2525";
-    box.textContent = text;
-}
-
-// SALVAR REGISTRO
-
-document.getElementById("entryForm")
-.addEventListener("submit", async function(event) {
-
-    event.preventDefault();
-
-    if (!currentUser) return;
-
-    const button = document.getElementById("saveButton");
-
-    button.disabled = true;
-    button.textContent = "Salvando...";
-
-    const record = {
-        created_by: currentUser,
-        entry_date: document.getElementById("entryDate").value,
-        entry_time: document.getElementById("entryTime").value,
-        type: currentType,
-        meal_type: currentType === "food"
-            ? document.getElementById("mealType").value : null,
-        description: currentType === "food"
-            ? document.getElementById("foodDescription").value : null,
-        quantity: currentType === "food"
-            ? document.getElementById("foodQuantity").value
-            : document.getElementById("stoolQuantity").value,
-        consistency: currentType === "stool"
-            ? document.getElementById("consistency").value : null,
-        color: currentType === "stool"
-            ? document.getElementById("stoolColor").value : null,
-        symptoms: currentType === "stool"
-            ? document.getElementById("symptoms").value : null,
-        notes: document.getElementById("notes").value
-    };
-
-    const { error } = await db
-        .from("diary_entries")
-        .insert(record);
-
-    button.disabled = false;
-    button.textContent = "Salvar registro";
-
-    if (error) {
-        showMessage("Erro ao salvar: " + error.message);
-        return;
-    }
-
-    showMessage("Registro salvo com sucesso! ❤️", true);
-
-    document.getElementById("entryForm").reset();
-
-    setDateTime();
-    loadEntries();
-
+document.getElementById("entryForm").addEventListener("submit",async event=>{
+event.preventDefault();if(!currentUser)return;
+const button=document.getElementById("saveButton");button.disabled=true;button.textContent="Salvando...";
+const record={
+created_by:currentUser,entry_date:document.getElementById("entryDate").value,entry_time:document.getElementById("entryTime").value,type:currentType,
+meal_type:currentType==="food"?document.getElementById("mealType").value:null,
+description:currentType==="food"?document.getElementById("foodDescription").value:null,
+quantity:currentType==="food"?document.getElementById("foodQuantity").value:document.getElementById("stoolQuantity").value,
+consistency:currentType==="stool"?document.getElementById("consistency").value:null,
+color:currentType==="stool"?document.getElementById("stoolColor").value:null,
+symptoms:currentType==="stool"?document.getElementById("symptoms").value:null,notes:document.getElementById("notes").value};
+try{const {error}=await db.from("diary_entries").insert(record);if(error)throw error;showMessage("Registro salvo com sucesso! ❤️",true);document.getElementById("entryForm").reset();setDateTime();await loadEntries()}
+catch(error){showMessage("Erro ao salvar: "+error.message)}
+finally{button.disabled=false;button.textContent="Salvar registro"}
 });
 
-// ESCAPAR HTML
-
-function escapeHTML(value) {
-    return String(value ?? "").replace(/[&<>"']/g, char => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;"
-    })[char]);
+async function loadEntries(){
+historyEl.textContent="Carregando...";
+try{const {data,error}=await db.from("diary_entries").select("*").order("entry_date",{ascending:false}).order("entry_time",{ascending:false}).limit(100);if(error)throw error;
+if(!data?.length){historyEl.textContent="Nenhum registro realizado ainda.";return}
+historyEl.innerHTML=data.map(item=>{const food=item.type==="food";return `<div class="entry"><h3>${food?"🍎 Alimentação":"💩 Evacuação"}</h3><small>${escapeHTML(formatDate(item.entry_date))} às ${escapeHTML(item.entry_time)} · Por ${escapeHTML(item.created_by)}</small>
+${food?`<p><b>Refeição:</b> ${escapeHTML(item.meal_type)}</p><p><b>Alimentos:</b> ${escapeHTML(item.description)}</p><p><b>Quantidade:</b> ${escapeHTML(item.quantity)}</p>`:`<p><b>Consistência:</b> ${escapeHTML(item.consistency)}</p><p><b>Cor:</b> ${escapeHTML(item.color)}</p><p><b>Quantidade:</b> ${escapeHTML(item.quantity)}</p><p><b>Muco/sangue:</b> ${escapeHTML(item.symptoms)}</p>`}
+${item.notes?`<p><b>Observações:</b> ${escapeHTML(item.notes)}</p>`:""}<button class="danger" onclick="deleteEntry('${String(item.id).replace(/'/g,"\\'")}')">Excluir registro</button></div>`}).join("")}
+catch(error){historyEl.textContent="Erro ao carregar: "+error.message}
 }
 
-// CARREGAR HISTÓRICO
-
-async function loadEntries() {
-
-    history.textContent = "Carregando...";
-
-    const { data, error } = await db
-        .from("diary_entries")
-        .select("*")
-        .order("entry_date", { ascending: false })
-        .order("entry_time", { ascending: false })
-        .limit(100);
-
-    if (error) {
-        history.textContent = "Erro ao carregar: " + error.message;
-        return;
-    }
-
-    if (!data || data.length === 0) {
-        history.textContent = "Nenhum registro realizado ainda.";
-        return;
-    }
-
-    history.innerHTML = data.map(item => {
-
-        const isFood = item.type === "food";
-
-        return `
-        <div class="entry">
-
-            <h3>${isFood ? "🍎 Alimentação" : "💩 Evacuação"}</h3>
-
-            <small>
-                ${escapeHTML(item.entry_date)}
-                às ${escapeHTML(item.entry_time)}
-                · Por ${escapeHTML(item.created_by)}
-            </small>
-
-            ${isFood ? `
-                <p><b>Refeição:</b> ${escapeHTML(item.meal_type)}</p>
-                <p><b>Alimentos:</b> ${escapeHTML(item.description)}</p>
-                <p><b>Quantidade:</b> ${escapeHTML(item.quantity)}</p>
-            ` : `
-                <p><b>Consistência:</b> ${escapeHTML(item.consistency)}</p>
-                <p><b>Cor:</b> ${escapeHTML(item.color)}</p>
-                <p><b>Quantidade:</b> ${escapeHTML(item.quantity)}</p>
-                <p><b>Muco/sangue:</b> ${escapeHTML(item.symptoms)}</p>
-            `}
-
-            ${item.notes ? `
-                <p><b>Observações:</b> ${escapeHTML(item.notes)}</p>
-            ` : ""}
-
-            <button class="danger"
-                onclick="deleteEntry('${item.id}')">
-                Excluir registro
-            </button>
-
-        </div>
-        `;
-
-    }).join("");
-
+async function fetchAllEntries(start,end){
+const all=[],size=500;
+for(let from=0;;from+=size){const {data,error}=await db.from("diary_entries").select("*").gte("entry_date",start).lte("entry_date",end).order("entry_date",{ascending:true}).order("entry_time",{ascending:true}).range(from,from+size-1);if(error)throw error;if(!data?.length)break;all.push(...data);if(data.length<size)break}
+return all;
 }
 
-// =====================================
-// GERAR RELATÓRIO PDF
-// =====================================
-
-async function generateReport() {
-
-    const start = document.getElementById("reportStart").value;
-    const end = document.getElementById("reportEnd").value;
-
-    const button = document.getElementById("generateReportButton");
-    const reportMessage = document.getElementById("reportMessage");
-
-    if (!start || !end) {
-        reportMessage.textContent = "Selecione as duas datas.";
-        return;
-    }
-
-    if (start > end) {
-        reportMessage.textContent =
-            "A data inicial não pode ser posterior à data final.";
-        return;
-    }
-
-    if (!window.jspdf) {
-        reportMessage.textContent =
-            "Não foi possível carregar o gerador de PDF. Verifique sua conexão.";
-        return;
-    }
-
-    button.disabled = true;
-    button.textContent = "Consultando registros...";
-
-    reportMessage.textContent = "";
-
-    try {
-
-        // Consulta todos os registros do período.
-        // Não limita a quantidade a 100.
-
-        let allEntries = [];
-        let from = 0;
-        const pageSize = 500;
-
-        while (true) {
-
-            const { data, error } = await db
-                .from("diary_entries")
-                .select("*")
-                .gte("entry_date", start)
-                .lte("entry_date", end)
-                .order("entry_date", { ascending: true })
-                .order("entry_time", { ascending: true })
-                .range(from, from + pageSize - 1);
-
-            if (error) throw error;
-
-            if (!data || data.length === 0) break;
-
-            allEntries = allEntries.concat(data);
-
-            if (data.length < pageSize) break;
-
-            from += pageSize;
-        }
-
-        if (allEntries.length === 0) {
-            reportMessage.textContent =
-                "Nenhum registro encontrado nesse período.";
-            return;
-        }
-
-        button.textContent = "Preparando PDF...";
-
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF();
-
-        const margin = 15;
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const maxWidth = pageWidth - margin * 2;
-
-        let y = 20;
-
-        function addPageIfNeeded(height = 10) {
-            if (y + height > pageHeight - 18) {
-                pdf.addPage();
-                y = 20;
-            }
-        }
-
-        function addTitle(text) {
-            addPageIfNeeded(12);
-            pdf.setFont("helvetica", "bold");
-            pdf.setFontSize(12);
-            pdf.text(text, margin, y);
-            y += 8;
-        }
-
-        function addText(text, size = 10) {
-
-            pdf.setFont("helvetica", "normal");
-            pdf.setFontSize(size);
-
-            const lines = pdf.splitTextToSize(
-                String(text || "-"),
-                maxWidth
-            );
-
-            addPageIfNeeded(lines.length * 5 + 3);
-
-            pdf.text(lines, margin, y);
-
-            y += lines.length * 5 + 2;
-        }
-
-        // TÍTULO
-
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(20);
-        pdf.text("Diario da Diana", margin, y);
-
-        y += 10;
-
-        pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(10);
-
-        pdf.text("Relatorio alimentar e intestinal", margin, y);
-
-        y += 8;
-
-        pdf.text(
-            "Periodo: " + formatDate(start) + " a " + formatDate(end),
-            margin,
-            y
-        );
-
-        y += 12;
-
-        // RESUMO
-
-        const foods = allEntries.filter(e => e.type === "food");
-        const stools = allEntries.filter(e => e.type === "stool");
-
-        const silas = allEntries.filter(e => e.created_by === "Silas");
-        const flavia = allEntries.filter(e => e.created_by === "Flávia");
-
-        addTitle("1. RESUMO DO PERIODO");
-
-        addText("Total de registros: " + allEntries.length);
-        addText("Registros alimentares: " + foods.length);
-        addText("Registros de evacuacao: " + stools.length);
-        addText("Registros feitos por Silas: " + silas.length);
-        addText("Registros feitos por Flavia: " + flavia.length);
-
-        y += 5;
-
-        // ALIMENTAÇÃO
-
-        addTitle("2. REGISTROS DE ALIMENTACAO");
-
-        if (foods.length === 0) {
-            addText("Nenhum registro alimentar no periodo.");
-        }
-
-        foods.forEach((item, index) => {
-
-            addPageIfNeeded(35);
-
-            pdf.setFont("helvetica", "bold");
-            pdf.setFontSize(10);
-
-            addText(
-                (index + 1) + ". " +
-                formatDate(item.entry_date) +
-                " - " + (item.entry_time || ""),
-                10
-            );
-
-            addText("Responsavel: " + (item.created_by || "-"));
-            addText("Refeicao: " + (item.meal_type || "-"));
-            addText("Alimentos: " + (item.description || "-"));
-            addText("Quantidade: " + (item.quantity || "-"));
-
-            if (item.notes) {
-                addText("Observacoes: " + item.notes);
-            }
-
-            y += 4;
-        });
-
-        // EVACUAÇÕES
-
-        addTitle("3. REGISTROS DE EVACUACAO");
-
-        if (stools.length === 0) {
-            addText("Nenhum registro de evacuacao no periodo.");
-        }
-
-        stools.forEach((item, index) => {
-
-            addPageIfNeeded(35);
-
-            addText(
-                (index + 1) + ". " +
-                formatDate(item.entry_date) +
-                " - " + (item.entry_time || ""),
-                10
-            );
-
-            addText("Responsavel: " + (item.created_by || "-"));
-            addText("Consistencia: " + (item.consistency || "-"));
-            addText("Cor: " + (item.color || "-"));
-            addText("Quantidade: " + (item.quantity || "-"));
-            addText("Muco ou sangue: " + (item.symptoms || "-"));
-
-            if (item.notes) {
-                addText("Observacoes: " + item.notes);
-            }
-
-            y += 4;
-        });
-
-        // RODAPÉ EM TODAS AS PÁGINAS
-
-        const totalPages = pdf.internal.getNumberOfPages();
-
-        for (let i = 1; i <= totalPages; i++) {
-
-            pdf.setPage(i);
-
-            pdf.setFontSize(8);
-            pdf.setFont("helvetica", "normal");
-
-            pdf.text(
-                "Diario da Diana - Pagina " + i + " de " + totalPages,
-                pageWidth / 2,
-                pageHeight - 8,
-                { align: "center" }
-            );
-        }
-
-        const filename =
-            "Diario_Diana_" + start + "_a_" + end + ".pdf";
-
-        pdf.save(filename);
-
-        reportMessage.textContent =
-            "Relatorio gerado com sucesso! ❤️";
-
-    } catch (error) {
-
-        console.error(error);
-
-        reportMessage.textContent =
-            "Erro ao gerar relatorio: " + error.message;
-
-    } finally {
-
-        button.disabled = false;
-        button.textContent = "📄 Gerar relatório em PDF";
-
-    }
-
+async function generateReport(){
+const start=document.getElementById("reportStart").value,end=document.getElementById("reportEnd").value;
+const button=document.getElementById("generateReportButton"),status=document.getElementById("reportMessage");
+if(!currentUser){status.textContent="Selecione um usuário primeiro.";return}
+if(!start||!end){status.textContent="Informe a data inicial e a data final.";return}
+if(start>end){status.textContent="A data inicial não pode ser posterior à data final.";return}
+button.disabled=true;button.textContent="Consultando registros...";status.textContent="";
+try{
+const data=await fetchAllEntries(start,end);
+if(!data.length){status.textContent="Nenhum registro encontrado nesse período.";return}
+const foods=data.filter(x=>x.type==="food"),stools=data.filter(x=>x.type==="stool");
+const records=data.map(item=>{const food=item.type==="food";return `<article class="record"><h3>${food?"🍎 Alimentação":"💩 Evacuação"}</h3>
+<p><b>Data e horário:</b> ${escapeHTML(formatDate(item.entry_date))} às ${escapeHTML(item.entry_time)}</p><p><b>Responsável:</b> ${escapeHTML(item.created_by)}</p>
+${food?`<p><b>Refeição:</b> ${escapeHTML(item.meal_type)}</p><p><b>Alimentos:</b> ${escapeHTML(item.description)}</p><p><b>Quantidade:</b> ${escapeHTML(item.quantity)}</p>`:`<p><b>Consistência:</b> ${escapeHTML(item.consistency)}</p><p><b>Cor:</b> ${escapeHTML(item.color)}</p><p><b>Quantidade:</b> ${escapeHTML(item.quantity)}</p><p><b>Muco/sangue:</b> ${escapeHTML(item.symptoms)}</p>`}
+${item.notes?`<p><b>Observações:</b> ${escapeHTML(item.notes)}</p>`:""}</article>`}).join("");
+const report=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relatório - Diário da Diana</title>
+<style>body{font-family:Arial,sans-serif;color:#26352d;max-width:850px;margin:25px auto;padding:0 18px;line-height:1.45}h1,h2{text-align:center}.summary{background:#e9f0eb;padding:16px;border-radius:9px;margin:22px 0}.record{border:1px solid #d5ddd7;border-left:4px solid #477c64;border-radius:8px;padding:12px 16px;margin:14px 0;break-inside:avoid}.record h3{margin:0 0 8px;color:#315a43}.record p{margin:5px 0}.print{display:block;width:100%;padding:14px;border:0;border-radius:8px;background:#477c64;color:white;font-size:16px;font-weight:bold;margin:0 0 22px}@media print{body{margin:0;max-width:none}.print{display:none}.record{break-inside:avoid}}</style></head><body>
+<button class="print" onclick="window.print()">🖨️ Imprimir / Salvar como PDF</button><h1>📖 Diário da Diana</h1><h2>Relatório alimentar e intestinal</h2>
+<div class="summary"><p><b>Período:</b> ${formatDate(start)} a ${formatDate(end)}</p><p><b>Total de registros:</b> ${data.length}</p><p><b>Alimentação:</b> ${foods.length}</p><p><b>Evacuações:</b> ${stools.length}</p><p><b>Registros de Silas:</b> ${data.filter(x=>x.created_by==="Silas").length}</p><p><b>Registros de Flávia:</b> ${data.filter(x=>x.created_by==="Flávia").length}</p></div>
+<h2>Registros do período</h2>${records}<p style="text-align:center;margin-top:30px;font-size:12px">Relatório gerado em ${new Date().toLocaleString("pt-BR")}</p></body></html>`;
+const blob=new Blob([report],{type:"text/html;charset=utf-8"}),url=URL.createObjectURL(blob),link=document.createElement("a");
+link.href=url;link.target="_blank";link.rel="noopener";link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+status.textContent="Relatório preparado. Na página aberta, toque em “Imprimir / Salvar como PDF”.";
+}catch(error){console.error(error);status.textContent="Erro ao gerar relatório: "+error.message}
+finally{button.disabled=false;button.textContent="📄 Gerar relatório"}
 }
 
-// FORMATAR DATA
-
-function formatDate(date) {
-
-    if (!date) return "-";
-
-    const parts = date.split("-");
-
-    return parts[2] + "/" + parts[1] + "/" + parts[0];
-
-}
-
-// EXCLUIR REGISTRO
-
-async function deleteEntry(id) {
-
-    if (!confirm("Deseja excluir este registro?")) return;
-
-    const { error } = await db
-        .from("diary_entries")
-        .delete()
-        .eq("id", id);
-
-    if (error) {
-        alert("Erro ao excluir: " + error.message);
-        return;
-    }
-
-    loadEntries();
-}
-
-// INICIALIZAÇÃO
-
-function initialize() {
-
-    const savedUser = localStorage.getItem("diario_usuario");
-
-    if (savedUser === "Silas" || savedUser === "Flávia") {
-        selectUser(savedUser);
-    }
-
-}
-
+async function deleteEntry(id){if(!confirm("Deseja excluir este registro?"))return;const {error}=await db.from("diary_entries").delete().eq("id",id);if(error){alert("Erro ao excluir: "+error.message);return}loadEntries()}
+function initialize(){const saved=localStorage.getItem("diario_usuario");if(saved==="Silas"||saved==="Flávia")selectUser(saved)}
 initialize();
-
 </script>
-
 </body>
 </html>

@@ -33,10 +33,7 @@ header {
 
 header h1 { margin: 0 0 8px; }
 
-header p {
-    margin: 0;
-    color: #718078;
-}
+header p { margin: 0; color: #718078; }
 
 .card {
     background: white;
@@ -55,9 +52,7 @@ input, button {
     font-size: 15px;
 }
 
-input {
-    border: 1px solid #d5ddd7;
-}
+input { border: 1px solid #d5ddd7; }
 
 button {
     border: none;
@@ -87,10 +82,7 @@ button:disabled {
 
 #dashboard { display: none; }
 
-.logout {
-    background: #a44d4d;
-}
-
+.logout { background: #a44d4d; }
 </style>
 </head>
 
@@ -134,7 +126,7 @@ button:disabled {
 
     </form>
 
-    <button class="secondary" id="signupBtn">
+    <button type="button" class="secondary" id="signupBtn">
         Criar conta
     </button>
 
@@ -160,7 +152,7 @@ button:disabled {
 
 <script>
 
-// CONFIGURAÇÃO SUPABASE
+// CONFIGURAÇÃO DO SUPABASE
 
 const SUPABASE_URL =
 "https://usjfxujtvzsyccuplwtv.supabase.co";
@@ -188,10 +180,23 @@ function showMessage(text, success = false) {
     message.textContent = text;
 }
 
-function setLoading(loading, text) {
+function setLoading(loading, action = "login") {
     loginBtn.disabled = loading;
     signupBtn.disabled = loading;
-    loginBtn.textContent = loading ? text : "Entrar";
+
+    loginBtn.textContent =
+        loading && action === "login" ? "Entrando..." : "Entrar";
+
+    signupBtn.textContent =
+        loading && action === "signup" ? "Criando conta..." : "Criar conta";
+}
+
+function showDashboard(user) {
+    login.style.display = "none";
+    dashboard.style.display = "block";
+
+    document.getElementById("userEmail").textContent =
+        "Conta: " + user.email;
 }
 
 // CADASTRO
@@ -200,6 +205,8 @@ signupBtn.addEventListener("click", async () => {
 
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
+
+    message.style.display = "none";
 
     if (!email || !password) {
         showMessage("Preencha o e-mail e a senha.");
@@ -211,31 +218,34 @@ signupBtn.addEventListener("click", async () => {
         return;
     }
 
-    setLoading(true, "Criando conta...");
+    setLoading(true, "signup");
 
-    const { data, error } = await supabaseClient.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-            emailRedirectTo: window.location.origin
+    try {
+
+        const { data, error } = await supabaseClient.auth.signUp({
+            email: email,
+            password: password
+        });
+
+        if (error) {
+            showMessage("Erro no cadastro: " + error.message);
+            return;
         }
-    });
 
-    setLoading(false);
+        if (data.session) {
+            showMessage("Conta criada com sucesso!", true);
+            showDashboard(data.user);
+        } else {
+            showMessage(
+                "Cadastro realizado! Verifique seu e-mail para confirmar a conta antes de entrar.",
+                true
+            );
+        }
 
-    if (error) {
-        showMessage("Erro no cadastro: " + error.message);
-        return;
-    }
-
-    if (data.session) {
-        showMessage("Conta criada com sucesso!", true);
-        showDashboard(data.user);
-    } else {
-        showMessage(
-            "Cadastro realizado! Verifique seu e-mail para confirmar a conta.",
-            true
-        );
+    } catch (error) {
+        showMessage("Falha de conexão: " + error.message);
+    } finally {
+        setLoading(false);
     }
 
 });
@@ -249,35 +259,30 @@ document.getElementById("authForm").addEventListener("submit", async (event) => 
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
 
-    setLoading(true, "Entrando...");
+    message.style.display = "none";
+    setLoading(true, "login");
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: password
-    });
+    try {
 
-    setLoading(false);
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
 
-    if (error) {
-        showMessage("Erro ao entrar: " + error.message);
-        return;
+        if (error) {
+            showMessage("Erro ao entrar: " + error.message);
+            return;
+        }
+
+        showDashboard(data.user);
+
+    } catch (error) {
+        showMessage("Falha de conexão: " + error.message);
+    } finally {
+        setLoading(false);
     }
 
-    showDashboard(data.user);
-
 });
-
-// MOSTRAR PAINEL
-
-function showDashboard(user) {
-
-    login.style.display = "none";
-    dashboard.style.display = "block";
-
-    document.getElementById("userEmail").textContent =
-        "Conta: " + user.email;
-
-}
 
 // SAIR
 
@@ -286,28 +291,34 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
     const { error } = await supabaseClient.auth.signOut();
 
     if (error) {
-        showMessage(error.message);
+        alert("Erro ao sair: " + error.message);
         return;
     }
 
     dashboard.style.display = "none";
     login.style.display = "block";
+    message.style.display = "none";
 
 });
 
-// VERIFICAR SESSÃO EXISTENTE
+// VERIFICAR SESSÃO
 
 async function checkSession() {
 
-    const { data, error } = await supabaseClient.auth.getSession();
+    try {
+        const { data, error } = await supabaseClient.auth.getSession();
 
-    if (error) {
-        showMessage(error.message);
-        return;
-    }
+        if (error) {
+            showMessage(error.message);
+            return;
+        }
 
-    if (data.session) {
-        showDashboard(data.session.user);
+        if (data.session) {
+            showDashboard(data.session.user);
+        }
+
+    } catch (error) {
+        showMessage("Erro ao verificar sessão: " + error.message);
     }
 
 }

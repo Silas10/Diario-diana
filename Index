@@ -1,0 +1,328 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diário da Diana</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    padding: 20px;
+    background: #f4f6f1;
+    font-family: Arial, sans-serif;
+    color: #26352d;
+}
+
+.container {
+    max-width: 500px;
+    margin: 30px auto;
+}
+
+header {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+header h1 { margin: 0 0 8px; }
+
+header p {
+    margin: 0;
+    color: #718078;
+}
+
+.card {
+    background: white;
+    padding: 22px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px #0000000a;
+}
+
+h2 { margin-top: 0; }
+
+input, button {
+    width: 100%;
+    padding: 13px;
+    margin: 8px 0;
+    border-radius: 7px;
+    font-size: 15px;
+}
+
+input {
+    border: 1px solid #d5ddd7;
+}
+
+button {
+    border: none;
+    background: #477c64;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+
+.secondary {
+    background: #e9f0eb;
+    color: #315a43;
+}
+
+#message {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 7px;
+    display: none;
+    overflow-wrap: anywhere;
+}
+
+#dashboard { display: none; }
+
+.logout {
+    background: #a44d4d;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <h1>📖 Diário da Diana</h1>
+    <p>Registro alimentar e intestinal da família</p>
+</header>
+
+<div class="card" id="login">
+
+    <h2>Acessar</h2>
+
+    <form id="authForm">
+
+        <label>E-mail</label>
+        <input
+            type="email"
+            id="email"
+            placeholder="Seu e-mail"
+            autocomplete="email"
+            required
+        >
+
+        <label>Senha</label>
+        <input
+            type="password"
+            id="password"
+            placeholder="Sua senha (mínimo 6 caracteres)"
+            autocomplete="current-password"
+            minlength="6"
+            required
+        >
+
+        <button type="submit" id="loginBtn">
+            Entrar
+        </button>
+
+    </form>
+
+    <button class="secondary" id="signupBtn">
+        Criar conta
+    </button>
+
+    <div id="message"></div>
+
+</div>
+
+<div class="card" id="dashboard">
+
+    <h2>Bem-vindo ao Diário da Diana! ❤️</h2>
+
+    <p id="userEmail"></p>
+
+    <p>Você está conectado.</p>
+
+    <button class="logout" id="logoutBtn">
+        Sair da conta
+    </button>
+
+</div>
+
+</div>
+
+<script>
+
+// CONFIGURAÇÃO SUPABASE
+
+const SUPABASE_URL =
+"https://usjfxujtvzsyccuplwtv.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_nwGlDWcWFP2-uFH50_ZZLA_UklPEf7M";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+// ELEMENTOS
+
+const login = document.getElementById("login");
+const dashboard = document.getElementById("dashboard");
+const message = document.getElementById("message");
+const loginBtn = document.getElementById("loginBtn");
+const signupBtn = document.getElementById("signupBtn");
+
+function showMessage(text, success = false) {
+    message.style.display = "block";
+    message.style.background = success ? "#e0f3e5" : "#ffe5e5";
+    message.style.color = success ? "#245d36" : "#9b2525";
+    message.textContent = text;
+}
+
+function setLoading(loading, text) {
+    loginBtn.disabled = loading;
+    signupBtn.disabled = loading;
+    loginBtn.textContent = loading ? text : "Entrar";
+}
+
+// CADASTRO
+
+signupBtn.addEventListener("click", async () => {
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!email || !password) {
+        showMessage("Preencha o e-mail e a senha.");
+        return;
+    }
+
+    if (password.length < 6) {
+        showMessage("A senha precisa ter pelo menos 6 caracteres.");
+        return;
+    }
+
+    setLoading(true, "Criando conta...");
+
+    const { data, error } = await supabaseClient.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+            emailRedirectTo: window.location.origin
+        }
+    });
+
+    setLoading(false);
+
+    if (error) {
+        showMessage("Erro no cadastro: " + error.message);
+        return;
+    }
+
+    if (data.session) {
+        showMessage("Conta criada com sucesso!", true);
+        showDashboard(data.user);
+    } else {
+        showMessage(
+            "Cadastro realizado! Verifique seu e-mail para confirmar a conta.",
+            true
+        );
+    }
+
+});
+
+// LOGIN
+
+document.getElementById("authForm").addEventListener("submit", async (event) => {
+
+    event.preventDefault();
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    setLoading(true, "Entrando...");
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
+
+    setLoading(false);
+
+    if (error) {
+        showMessage("Erro ao entrar: " + error.message);
+        return;
+    }
+
+    showDashboard(data.user);
+
+});
+
+// MOSTRAR PAINEL
+
+function showDashboard(user) {
+
+    login.style.display = "none";
+    dashboard.style.display = "block";
+
+    document.getElementById("userEmail").textContent =
+        "Conta: " + user.email;
+
+}
+
+// SAIR
+
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+
+    const { error } = await supabaseClient.auth.signOut();
+
+    if (error) {
+        showMessage(error.message);
+        return;
+    }
+
+    dashboard.style.display = "none";
+    login.style.display = "block";
+
+});
+
+// VERIFICAR SESSÃO EXISTENTE
+
+async function checkSession() {
+
+    const { data, error } = await supabaseClient.auth.getSession();
+
+    if (error) {
+        showMessage(error.message);
+        return;
+    }
+
+    if (data.session) {
+        showDashboard(data.session.user);
+    }
+
+}
+
+supabaseClient.auth.onAuthStateChange((event, session) => {
+
+    if (session) {
+        showDashboard(session.user);
+    }
+
+});
+
+checkSession();
+
+</script>
+
+</body>
+</html>

@@ -7,21 +7,23 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}body{margin:0;padding:16px;background:#f4f6f1;font-family:Arial,sans-serif;color:#26352d}
-.container{max-width:600px;margin:20px auto}header,.card{background:white;padding:22px;border-radius:15px;margin-bottom:18px;box-shadow:0 2px 10px #00000008}
+.container{max-width:650px;margin:20px auto}header,.card{background:white;padding:22px;border-radius:15px;margin-bottom:18px;box-shadow:0 2px 10px #00000008}
 header{text-align:center}header h1{margin:0 0 8px}header p{color:#718078;margin:0}h2{margin-top:0}
 button,input,select,textarea{width:100%;padding:13px;margin:7px 0;border-radius:8px;font-size:15px}
 input,select,textarea{border:1px solid #d5ddd7;background:white;color:#26352d}textarea{min-height:85px;resize:vertical}
 button{border:0;background:#477c64;color:white;font-weight:bold;cursor:pointer}button:disabled{opacity:.5}
-.secondary{background:#e9f0eb;color:#315a43}.danger{background:#a44d4d}
+.secondary{background:#e9f0eb;color:#315a43}.danger{background:#a44d4d}.warning{background:#a97936}
 .users{display:grid;grid-template-columns:1fr 1fr;gap:12px}.user-button{background:#e9f0eb;color:#315a43;padding:25px 10px;font-size:18px}
 .user-button span{display:block;font-size:35px;margin-bottom:8px}#dashboard{display:none}
 .tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:15px}.tabs button{background:#e9f0eb;color:#315a43}.tabs button.active{background:#477c64;color:white}
 .entry{border-left:4px solid #477c64;padding:12px;margin:12px 0;background:#f5f8f5;border-radius:8px;overflow-wrap:anywhere}
-.entry h3{margin:0 0 8px}.entry small{color:#718078}.entry p{margin:7px 0}.entry button{padding:8px;font-size:13px}
+.entry h3{margin:0 0 8px}.entry small{color:#718078}.entry p{margin:7px 0}.entry button{padding:9px;font-size:13px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 #message{display:none;padding:12px;border-radius:8px;margin-bottom:12px;overflow-wrap:anywhere}
 label{display:block;font-weight:bold;margin-top:12px;font-size:14px}.user-info{color:#477c64;font-weight:bold;text-align:center}.hidden{display:none}
 .report-period{display:grid;grid-template-columns:1fr 1fr;gap:10px}.report-info{font-size:13px;color:#718078;line-height:1.5}
-@media(max-width:380px){.report-period{grid-template-columns:1fr}}
+.help{font-size:13px;color:#718078;line-height:1.5}.subcard{border:1px solid #d5ddd7;border-radius:10px;padding:12px;margin:12px 0}
+@media(max-width:420px){.report-period,.users{grid-template-columns:1fr}.actions{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -35,19 +37,26 @@ label{display:block;font-weight:bold;margin-top:12px;font-size:14px}.user-info{c
 </div></div>
 <div id="dashboard">
 <div class="card"><p class="user-info">Diário da Diana · <span id="userName"></span></p><button class="secondary" onclick="changeUser()">Trocar usuário</button></div>
+
 <div class="card">
 <h2>📝 Novo registro</h2>
+<div class="tabs">
+<button id="quickTab" class="active" type="button" onclick="setMode('quick')">⚡ Registro rápido</button>
+<button id="dailyTab" type="button" onclick="setMode('daily')">📅 Fechamento do dia</button>
+</div>
+<p class="help" id="modeHelp">Registre uma refeição ou evacuação assim que acontecer. Cada lançamento ficará agrupado com os demais registros da mesma data.</p>
+<div id="message"></div>
+
+<div id="quickMode">
 <div class="tabs">
 <button id="foodTab" class="active" type="button" onclick="changeType('food')">🍎 Alimentação</button>
 <button id="stoolTab" type="button" onclick="changeType('stool')">💩 Evacuação</button>
 </div>
-<div id="message"></div>
 <form id="entryForm">
 <label>Data</label><input type="date" id="entryDate" required>
 <label>Horário</label><input type="time" id="entryTime" required>
 <div id="foodFields">
-<label>Tipo de refeição</label><select id="mealType">
-<option>Café da manhã</option><option>Lanche da manhã</option><option>Almoço</option><option>Lanche da tarde</option><option>Jantar</option><option>Ceia</option><option>Mamadeira</option><option>Outro</option></select>
+<label>Tipo de refeição</label><select id="mealType"><option>Café da manhã</option><option>Lanche da manhã</option><option>Almoço</option><option>Lanche da tarde</option><option>Jantar</option><option>Ceia</option><option>Mamadeira</option><option>Outro</option></select>
 <label>Alimentos consumidos</label><textarea id="foodDescription" placeholder="Ex: arroz, feijão, frango e cenoura"></textarea>
 <label>Quantidade aproximada</label><input id="foodQuantity" placeholder="Ex: 3 colheres, 150 ml">
 </div>
@@ -60,6 +69,24 @@ label{display:block;font-weight:bold;margin-top:12px;font-size:14px}.user-info{c
 <label>Observações</label><textarea id="notes" placeholder="Outras informações importantes..."></textarea>
 <button type="submit" id="saveButton">Salvar registro</button>
 </form></div>
+
+<div id="dailyMode" class="hidden">
+<label>Data do diário</label><input type="date" id="dailyDate">
+<div class="subcard">
+<h3>🍎 Alimentação do dia</h3>
+<p class="help">Uma refeição por linha, no formato: horário | refeição | alimentos | quantidade. Exemplo: 08:00 | Café da manhã | banana e aveia | meia banana.</p>
+<textarea id="dailyFoods" placeholder="08:00 | Café da manhã | banana e aveia | meia banana&#10;12:00 | Almoço | arroz, feijão e frango | 3 colheres"></textarea>
+</div>
+<div class="subcard">
+<h3>💩 Evacuações do dia</h3>
+<p class="help">Uma evacuação por linha, no formato: horário | consistência | cor | quantidade | muco/sangue. Exemplo: 10:30 | Pastosas | Marrom | Média | Nenhum.</p>
+<textarea id="dailyStools" placeholder="10:30 | Pastosas | Marrom | Média | Nenhum&#10;17:00 | Formadas | Marrom | Pequena | Nenhum"></textarea>
+</div>
+<label>Observações gerais do dia</label><textarea id="dailyNotes" placeholder="Sintomas, comportamento, alimentos novos, medicamentos etc."></textarea>
+<button type="button" id="saveDailyButton" onclick="saveDaily()">Salvar fechamento do dia</button>
+</div>
+</div>
+
 <div class="card">
 <h2>📊 Relatório da Diana</h2>
 <p class="report-info">Selecione o período. O relatório reúne os registros de Silas e Flávia e permite imprimir ou salvar em PDF.</p>
@@ -70,23 +97,33 @@ label{display:block;font-weight:bold;margin-top:12px;font-size:14px}.user-info{c
 <button id="generateReportButton" type="button" onclick="generateReport()">📄 Gerar relatório</button>
 <div id="reportMessage" class="report-info" aria-live="polite"></div>
 </div>
-<div class="card"><h2>📚 Histórico</h2><button class="secondary" type="button" onclick="loadEntries()">🔄 Atualizar histórico</button><div id="history">Carregando registros...</div></div>
+
+<div class="card">
+<h2>📚 Histórico</h2>
+<button class="secondary" type="button" onclick="loadEntries()">🔄 Atualizar histórico</button>
+<label>Excluir todos os registros de uma data</label>
+<input type="date" id="deleteDayDate">
+<button class="danger" type="button" onclick="deleteDay()">🗑️ Excluir diário inteiro dessa data</button>
+<p class="help">Essa ação apaga os registros de alimentação e evacuação dos dois responsáveis na data escolhida. A exclusão é permanente.</p>
+<div id="history">Carregando registros...</div>
+</div>
 </div></div>
 
 <script>
 const SUPABASE_URL="https://usjfxujtvzsyccuplwtv.supabase.co";
 const SUPABASE_KEY="sb_publishable_nwGlDWcWFP2-uFH50_ZZLA_UklPEf7M";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-let currentUser=null,currentType="food";
+let currentUser=null,currentType="food",currentMode="quick";
 const selection=document.getElementById("selection"),dashboard=document.getElementById("dashboard");
 const foodFields=document.getElementById("foodFields"),stoolFields=document.getElementById("stoolFields");
 const historyEl=document.getElementById("history");
 
 function localDateString(date=new Date()){const d=new Date(date.getTime()-date.getTimezoneOffset()*60000);return d.toISOString().slice(0,10)}
-function setDateTime(){const now=new Date(),today=localDateString(now);document.getElementById("entryDate").value=today;document.getElementById("entryTime").value=now.toTimeString().slice(0,5);document.getElementById("reportStart").value=today.slice(0,8)+"01";document.getElementById("reportEnd").value=today}
+function setDateTime(){const now=new Date(),today=localDateString(now);document.getElementById("entryDate").value=today;document.getElementById("entryTime").value=now.toTimeString().slice(0,5);document.getElementById("dailyDate").value=today;document.getElementById("reportStart").value=today.slice(0,8)+"01";document.getElementById("reportEnd").value=today;document.getElementById("deleteDayDate").value=today}
 function selectUser(name){currentUser=name;localStorage.setItem("diario_usuario",name);document.getElementById("userName").textContent=name;selection.style.display="none";dashboard.style.display="block";setDateTime();loadEntries()}
 function changeUser(){currentUser=null;localStorage.removeItem("diario_usuario");dashboard.style.display="none";selection.style.display="block"}
 function changeType(type){currentType=type;foodFields.classList.toggle("hidden",type!=="food");stoolFields.classList.toggle("hidden",type!=="stool");document.getElementById("foodTab").classList.toggle("active",type==="food");document.getElementById("stoolTab").classList.toggle("active",type==="stool")}
+function setMode(mode){currentMode=mode;document.getElementById("quickMode").classList.toggle("hidden",mode!=="quick");document.getElementById("dailyMode").classList.toggle("hidden",mode!=="daily");document.getElementById("quickTab").classList.toggle("active",mode==="quick");document.getElementById("dailyTab").classList.toggle("active",mode==="daily");document.getElementById("modeHelp").textContent=mode==="quick"?"Registre uma refeição ou evacuação assim que acontecer. Cada lançamento ficará agrupado com os demais registros da mesma data.":"Faça um fechamento com várias refeições e evacuações. Cada linha será salva no mesmo diário e na mesma data."}
 function showMessage(text,success=false){const box=document.getElementById("message");box.style.display="block";box.style.background=success?"#e0f3e5":"#ffe5e5";box.style.color=success?"#245d36":"#9b2525";box.textContent=text}
 function escapeHTML(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 function formatDate(date){if(!date)return "-";const p=String(date).split("-");return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:date}
@@ -94,27 +131,55 @@ function formatDate(date){if(!date)return "-";const p=String(date).split("-");re
 document.getElementById("entryForm").addEventListener("submit",async event=>{
 event.preventDefault();if(!currentUser)return;
 const button=document.getElementById("saveButton");button.disabled=true;button.textContent="Salvando...";
-const record={
-created_by:currentUser,entry_date:document.getElementById("entryDate").value,entry_time:document.getElementById("entryTime").value,type:currentType,
-meal_type:currentType==="food"?document.getElementById("mealType").value:null,
-description:currentType==="food"?document.getElementById("foodDescription").value:null,
-quantity:currentType==="food"?document.getElementById("foodQuantity").value:document.getElementById("stoolQuantity").value,
-consistency:currentType==="stool"?document.getElementById("consistency").value:null,
-color:currentType==="stool"?document.getElementById("stoolColor").value:null,
-symptoms:currentType==="stool"?document.getElementById("symptoms").value:null,notes:document.getElementById("notes").value};
+const record=makeQuickRecord();
 try{const {error}=await db.from("diary_entries").insert(record);if(error)throw error;showMessage("Registro salvo com sucesso! ❤️",true);document.getElementById("entryForm").reset();setDateTime();await loadEntries()}
 catch(error){showMessage("Erro ao salvar: "+error.message)}
 finally{button.disabled=false;button.textContent="Salvar registro"}
 });
+function makeQuickRecord(){return {created_by:currentUser,entry_date:document.getElementById("entryDate").value,entry_time:document.getElementById("entryTime").value,type:currentType,meal_type:currentType==="food"?document.getElementById("mealType").value:null,description:currentType==="food"?document.getElementById("foodDescription").value:null,quantity:currentType==="food"?document.getElementById("foodQuantity").value:document.getElementById("stoolQuantity").value,consistency:currentType==="stool"?document.getElementById("consistency").value:null,color:currentType==="stool"?document.getElementById("stoolColor").value:null,symptoms:currentType==="stool"?document.getElementById("symptoms").value:null,notes:document.getElementById("notes").value};}
+
+function parseLines(text,kind,date){
+const lines=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+return lines.map((line,index)=>{const p=line.split("|").map(x=>x.trim());if(kind==="food"){if(p.length<3||!p[2])throw new Error(`Alimentação: confira a linha ${index+1}. Use horário | refeição | alimentos | quantidade.`);return {created_by:currentUser,entry_date:date,entry_time:p[0]||"12:00",type:"food",meal_type:p[1]||"Refeição",description:p[2],quantity:p[3]||null,consistency:null,color:null,symptoms:null,notes:document.getElementById("dailyNotes").value||null};}
+if(p.length<2)throw new Error(`Evacuação: confira a linha ${index+1}.`);return {created_by:currentUser,entry_date:date,entry_time:p[0]||"12:00",type:"stool",meal_type:null,description:null,quantity:p[3]||"Média",consistency:p[1]||null,color:p[2]||null,symptoms:p[4]||"Nenhum",notes:document.getElementById("dailyNotes").value||null};});
+}
+async function saveDaily(){
+const date=document.getElementById("dailyDate").value,foods=document.getElementById("dailyFoods").value,stools=document.getElementById("dailyStools").value,button=document.getElementById("saveDailyButton");
+if(!date){showMessage("Escolha a data do diário.");return}if(!foods.trim()&&!stools.trim()&&!document.getElementById("dailyNotes").value.trim()){showMessage("Preencha pelo menos uma refeição, evacuação ou observação.");return}
+button.disabled=true;button.textContent="Salvando diário...";
+try{const records=[...parseLines(foods,"food",date),...parseLines(stools,"stool",date)];if(!records.length)throw new Error("Informe ao menos uma refeição ou evacuação.");const {error}=await db.from("diary_entries").insert(records);if(error)throw error;showMessage(`${records.length} lançamento(s) salvos no diário de ${formatDate(date)}! ❤️`,true);document.getElementById("dailyFoods").value="";document.getElementById("dailyStools").value="";document.getElementById("dailyNotes").value="";await loadEntries();}
+catch(error){showMessage("Não foi possível salvar: "+error.message)}
+finally{button.disabled=false;button.textContent="Salvar fechamento do dia"}
+}
 
 async function loadEntries(){
 historyEl.textContent="Carregando...";
-try{const {data,error}=await db.from("diary_entries").select("*").order("entry_date",{ascending:false}).order("entry_time",{ascending:false}).limit(100);if(error)throw error;
+try{const {data,error}=await db.from("diary_entries").select("*").order("entry_date",{ascending:false}).order("entry_time",{ascending:false}).limit(300);if(error)throw error;
 if(!data?.length){historyEl.textContent="Nenhum registro realizado ainda.";return}
-historyEl.innerHTML=data.map(item=>{const food=item.type==="food";return `<div class="entry"><h3>${food?"🍎 Alimentação":"💩 Evacuação"}</h3><small>${escapeHTML(formatDate(item.entry_date))} às ${escapeHTML(item.entry_time)} · Por ${escapeHTML(item.created_by)}</small>
+const groups={};data.forEach(x=>(groups[x.entry_date]??=[]).push(x));
+historyEl.innerHTML=Object.entries(groups).map(([day,items])=>`<div class="subcard"><h3>📅 ${escapeHTML(formatDate(day))} (${items.length} lançamento(s))</h3>${items.map(item=>{const food=item.type==="food";return `<div class="entry"><h3>${food?"🍎 Alimentação":"💩 Evacuação"}</h3><small>${escapeHTML(item.entry_time||"-")} · Por ${escapeHTML(item.created_by||"-")}</small>
 ${food?`<p><b>Refeição:</b> ${escapeHTML(item.meal_type)}</p><p><b>Alimentos:</b> ${escapeHTML(item.description)}</p><p><b>Quantidade:</b> ${escapeHTML(item.quantity)}</p>`:`<p><b>Consistência:</b> ${escapeHTML(item.consistency)}</p><p><b>Cor:</b> ${escapeHTML(item.color)}</p><p><b>Quantidade:</b> ${escapeHTML(item.quantity)}</p><p><b>Muco/sangue:</b> ${escapeHTML(item.symptoms)}</p>`}
-${item.notes?`<p><b>Observações:</b> ${escapeHTML(item.notes)}</p>`:""}<button class="danger" onclick="deleteEntry('${String(item.id).replace(/'/g,"\\'")}')">Excluir registro</button></div>`}).join("")}
+${item.notes?`<p><b>Observações:</b> ${escapeHTML(item.notes)}</p>`:""}
+<div class="actions"><button class="secondary" onclick="editEntry('${String(item.id).replace(/'/g,"\\'")}')">✏️ Editar</button><button class="danger" onclick="deleteEntry('${String(item.id).replace(/'/g,"\\'")}')">Excluir</button></div></div>`}).join("")}</div>`).join("")}
 catch(error){historyEl.textContent="Erro ao carregar: "+error.message}
+}
+
+async function editEntry(id){
+try{const {data:item,error}=await db.from("diary_entries").select("*").eq("id",id).single();if(error)throw error;
+const date=prompt("Data (AAAA-MM-DD):",item.entry_date);if(date===null)return;
+const time=prompt("Horário (HH:MM):",item.entry_time||"12:00");if(time===null)return;
+let changes={entry_date:date,entry_time:time};
+if(item.type==="food"){const meal=prompt("Tipo de refeição:",item.meal_type||"");if(meal===null)return;const desc=prompt("Alimentos consumidos:",item.description||"");if(desc===null)return;const qty=prompt("Quantidade:",item.quantity||"");if(qty===null)return;changes={...changes,meal_type:meal,description:desc,quantity:qty};}
+else{const consistency=prompt("Consistência:",item.consistency||"");if(consistency===null)return;const color=prompt("Cor:",item.color||"");if(color===null)return;const qty=prompt("Quantidade:",item.quantity||"");if(qty===null)return;const symptoms=prompt("Muco/sangue:",item.symptoms||"");if(symptoms===null)return;changes={...changes,consistency,color,quantity:qty,symptoms};}
+const notes=prompt("Observações:",item.notes||"");if(notes===null)return;changes.notes=notes;
+const {error:updateError}=await db.from("diary_entries").update(changes).eq("id",id);if(updateError)throw updateError;alert("Registro atualizado.");loadEntries();
+}catch(error){alert("Erro ao editar: "+error.message)}
+}
+async function deleteEntry(id){if(!confirm("Deseja excluir permanentemente este registro?"))return;const {error}=await db.from("diary_entries").delete().eq("id",id);if(error){alert("Erro ao excluir: "+error.message);return}await loadEntries()}
+async function deleteDay(){
+const date=document.getElementById("deleteDayDate").value;if(!date){alert("Escolha a data que deseja excluir.");return}
+if(!confirm(`ATENÇÃO: deseja apagar TODOS os registros de alimentação e evacuação de ${formatDate(date)}, de Silas e Flávia? Esta ação não pode ser desfeita.`))return;
+const {error}=await db.from("diary_entries").delete().eq("entry_date",date);if(error){alert("Erro ao excluir o diário: "+error.message);return}alert("Registros dessa data excluídos.");await loadEntries();
 }
 
 async function fetchAllEntries(start,end){
@@ -122,42 +187,22 @@ const all=[],size=500;
 for(let from=0;;from+=size){const {data,error}=await db.from("diary_entries").select("*").gte("entry_date",start).lte("entry_date",end).order("entry_date",{ascending:true}).order("entry_time",{ascending:true}).range(from,from+size-1);if(error)throw error;if(!data?.length)break;all.push(...data);if(data.length<size)break}
 return all;
 }
-
 async function generateReport(){
-const start=document.getElementById("reportStart").value,end=document.getElementById("reportEnd").value;
-const button=document.getElementById("generateReportButton"),status=document.getElementById("reportMessage");
-if(!currentUser){status.textContent="Selecione um usuário primeiro.";return}
-if(!start||!end){status.textContent="Informe a data inicial e a data final.";return}
-if(start>end){status.textContent="A data inicial não pode ser posterior à data final.";return}
+const start=document.getElementById("reportStart").value,end=document.getElementById("reportEnd").value,button=document.getElementById("generateReportButton"),status=document.getElementById("reportMessage");
+if(!currentUser){status.textContent="Selecione um usuário primeiro.";return}if(!start||!end){status.textContent="Informe a data inicial e a data final.";return}if(start>end){status.textContent="A data inicial não pode ser posterior à data final.";return}
 button.disabled=true;button.textContent="Consultando registros...";status.textContent="";
-try{
-const data=await fetchAllEntries(start,end);
-if(!data.length){status.textContent="Nenhum registro encontrado nesse período.";return}
-const foods=data.filter(x=>x.type==="food"),stools=data.filter(x=>x.type==="stool");
-const days=[...new Set(data.map(item=>item.entry_date))].sort();
-const records=days.map(day=>{
-const dayItems=data.filter(item=>item.entry_date===day);
-const dayFoods=dayItems.filter(item=>item.type==="food").sort((a,b)=>(a.entry_time||"").localeCompare(b.entry_time||""));
-const dayStools=dayItems.filter(item=>item.type==="stool").sort((a,b)=>(a.entry_time||"").localeCompare(b.entry_time||""));
+try{const data=await fetchAllEntries(start,end);if(!data.length){status.textContent="Nenhum registro encontrado nesse período.";return}
+const foods=data.filter(x=>x.type==="food"),stools=data.filter(x=>x.type==="stool"),days=[...new Set(data.map(x=>x.entry_date))].sort();
+const records=days.map(day=>{const dayItems=data.filter(x=>x.entry_date===day),dayFoods=dayItems.filter(x=>x.type==="food"),dayStools=dayItems.filter(x=>x.type==="stool");
 const foodRows=dayFoods.length?dayFoods.map(item=>`<div class="item"><p><b>${escapeHTML(item.entry_time||"-")} · ${escapeHTML(item.meal_type||"Refeição")}</b></p><p><b>O que comeu:</b> ${escapeHTML(item.description||"Não informado")}</p><p><b>Quantidade:</b> ${escapeHTML(item.quantity||"Não informada")}</p><p><b>Registrado por:</b> ${escapeHTML(item.created_by||"-")}</p>${item.notes?`<p><b>Observações:</b> ${escapeHTML(item.notes)}</p>`:""}</div>`).join(""):`<p class="empty">Nenhum alimento registrado neste dia.</p>`;
 const stoolRows=dayStools.length?dayStools.map(item=>`<div class="item stool"><p><b>${escapeHTML(item.entry_time||"-")}</b> · ${escapeHTML(item.consistency||"Consistência não informada")}</p><p><b>Cor:</b> ${escapeHTML(item.color||"-")} · <b>Quantidade:</b> ${escapeHTML(item.quantity||"-")}</p><p><b>Muco/sangue:</b> ${escapeHTML(item.symptoms||"-")}</p><p><b>Registrado por:</b> ${escapeHTML(item.created_by||"-")}</p>${item.notes?`<p><b>Observações:</b> ${escapeHTML(item.notes)}</p>`:""}</div>`).join(""):`<p class="empty">Nenhuma evacuação registrada neste dia.</p>`;
-return `<section class="day"><h2>📅 ${escapeHTML(formatDate(day))}</h2><h3>🍎 Alimentação do dia (${dayFoods.length} registro(s))</h3>${foodRows}<h3>💩 Evacuações do dia (${dayStools.length} registro(s))</h3>${stoolRows}</section>`;
-}).join("");
-const report=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relatório - Diário da Diana</title>
-<style>body{font-family:Arial,sans-serif;color:#26352d;max-width:850px;margin:25px auto;padding:0 18px;line-height:1.45}h1,h2{text-align:center}.summary{background:#e9f0eb;padding:16px;border-radius:9px;margin:22px 0}.day{border:1px solid #d5ddd7;border-left:4px solid #477c64;border-radius:8px;padding:14px 16px;margin:18px 0;break-inside:avoid}.day>h2{text-align:left;border-bottom:1px solid #d5ddd7;padding-bottom:8px}.day h3{color:#315a43;margin:16px 0 8px}.item{background:#f5f8f5;border-radius:7px;padding:9px 12px;margin:8px 0;break-inside:avoid}.item p{margin:4px 0}.stool{border-left:3px solid #b58a54}.empty{color:#718078;font-style:italic}.print{display:block;width:100%;padding:14px;border:0;border-radius:8px;background:#477c64;color:white;font-size:16px;font-weight:bold;margin:0 0 22px}@media print{body{margin:0;max-width:none}.print{display:none}.day,.item{break-inside:avoid}}</style></head><body>
-<button class="print" onclick="window.print()">🖨️ Imprimir / Salvar como PDF</button><h1>📖 Diário da Diana</h1><h2>Relatório alimentar e intestinal</h2>
-<div class="summary"><p><b>Período:</b> ${formatDate(start)} a ${formatDate(end)}</p><p><b>Total de registros:</b> ${data.length}</p><p><b>Alimentação:</b> ${foods.length}</p><p><b>Evacuações:</b> ${stools.length}</p><p><b>Registros de Silas:</b> ${data.filter(x=>x.created_by==="Silas").length}</p><p><b>Registros de Flávia:</b> ${data.filter(x=>x.created_by==="Flávia").length}</p></div>
-<h2>Registros do período</h2>${records}<p style="text-align:center;margin-top:30px;font-size:12px">Relatório gerado em ${new Date().toLocaleString("pt-BR")}</p></body></html>`;
-const blob=new Blob([report],{type:"text/html;charset=utf-8"}),url=URL.createObjectURL(blob),link=document.createElement("a");
-link.href=url;link.target="_blank";link.rel="noopener";link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
-status.textContent="Relatório preparado. Na página aberta, toque em “Imprimir / Salvar como PDF”.";
+return `<section class="day"><h2>📅 ${escapeHTML(formatDate(day))}</h2><h3>🍎 Alimentação do dia (${dayFoods.length} registro(s))</h3>${foodRows}<h3>💩 Evacuações do dia (${dayStools.length} registro(s))</h3>${stoolRows}</section>`}).join("");
+const report=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relatório - Diário da Diana</title><style>body{font-family:Arial,sans-serif;color:#26352d;max-width:850px;margin:25px auto;padding:0 18px;line-height:1.45}h1,h2{text-align:center}.summary{background:#e9f0eb;padding:16px;border-radius:9px;margin:22px 0}.day{border:1px solid #d5ddd7;border-left:4px solid #477c64;border-radius:8px;padding:14px 16px;margin:18px 0;break-inside:avoid}.day>h2{text-align:left;border-bottom:1px solid #d5ddd7;padding-bottom:8px}.day h3{color:#315a43;margin:16px 0 8px}.item{background:#f5f8f5;border-radius:7px;padding:9px 12px;margin:8px 0;break-inside:avoid}.item p{margin:4px 0}.stool{border-left:3px solid #b58a54}.empty{color:#718078;font-style:italic}.print{display:block;width:100%;padding:14px;border:0;border-radius:8px;background:#477c64;color:white;font-size:16px;font-weight:bold;margin:0 0 22px}@media print{body{margin:0;max-width:none}.print{display:none}.day,.item{break-inside:avoid}}</style></head><body><button class="print" onclick="window.print()">🖨️ Imprimir / Salvar como PDF</button><h1>📖 Diário da Diana</h1><h2>Relatório alimentar e intestinal</h2><div class="summary"><p><b>Período:</b> ${formatDate(start)} a ${formatDate(end)}</p><p><b>Total de registros:</b> ${data.length}</p><p><b>Alimentação:</b> ${foods.length}</p><p><b>Evacuações:</b> ${stools.length}</p><p><b>Registros de Silas:</b> ${data.filter(x=>x.created_by==="Silas").length}</p><p><b>Registros de Flávia:</b> ${data.filter(x=>x.created_by==="Flávia").length}</p></div><h2>Registros do período</h2>${records}<p style="text-align:center;margin-top:30px;font-size:12px">Relatório gerado em ${new Date().toLocaleString("pt-BR")}</p></body></html>`;
+const blob=new Blob([report],{type:"text/html;charset=utf-8"}),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener";link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);status.textContent="Relatório preparado. Na página aberta, toque em “Imprimir / Salvar como PDF”.";
 }catch(error){console.error(error);status.textContent="Erro ao gerar relatório: "+error.message}
 finally{button.disabled=false;button.textContent="📄 Gerar relatório"}
 }
-
-async function deleteEntry(id){if(!confirm("Deseja excluir este registro?"))return;const {error}=await db.from("diary_entries").delete().eq("id",id);if(error){alert("Erro ao excluir: "+error.message);return}loadEntries()}
 function initialize(){const saved=localStorage.getItem("diario_usuario");if(saved==="Silas"||saved==="Flávia")selectUser(saved)}
 initialize();
 </script>
-</body>
-</html>
+</body></html>

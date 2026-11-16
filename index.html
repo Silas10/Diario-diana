@@ -3,118 +3,163 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Diário da Diana</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-* {
-    box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
     margin: 0;
-    padding: 20px;
+    padding: 16px;
     background: #f4f6f1;
     font-family: Arial, sans-serif;
     color: #26352d;
 }
 
 .container {
-    max-width: 500px;
-    margin: 35px auto;
+    max-width: 600px;
+    margin: 20px auto;
 }
 
-header {
+header, .card {
     background: white;
-    padding: 25px;
+    padding: 22px;
     border-radius: 15px;
-    margin-bottom: 20px;
-    text-align: center;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 10px #00000008;
 }
 
-header h1 {
-    margin: 0 0 10px;
-    font-size: 27px;
+header { text-align: center; }
+header h1 { margin: 0 0 8px; }
+header p { color: #718078; margin: 0; }
+
+h2 { margin-top: 0; }
+
+button, input, select, textarea {
+    width: 100%;
+    padding: 13px;
+    margin: 7px 0;
+    border-radius: 8px;
+    font-size: 15px;
 }
 
-header p {
-    margin: 0;
-    color: #718078;
-}
-
-.card {
+input, select, textarea {
+    border: 1px solid #d5ddd7;
     background: white;
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0 2px 10px #0000000a;
+    color: #26352d;
 }
 
-h2 {
-    margin-top: 0;
-    text-align: center;
+textarea {
+    min-height: 85px;
+    resize: vertical;
+}
+
+button {
+    border: none;
+    background: #477c64;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:disabled { opacity: .5; }
+
+.secondary {
+    background: #e9f0eb;
+    color: #315a43;
+}
+
+.danger {
+    background: #a44d4d;
 }
 
 .users {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-top: 25px;
+    gap: 12px;
 }
 
 .user-button {
-    background: #f0f5f1;
-    color: #315a43;
-    border: 2px solid #e0e9e2;
-    border-radius: 12px;
-    padding: 25px 10px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: .2s;
-}
-
-.user-button:hover {
-    background: #dcebe0;
-    border-color: #477c64;
-}
-
-.avatar {
-    display: block;
-    font-size: 40px;
-    margin-bottom: 12px;
-}
-
-#dashboard {
-    display: none;
-}
-
-.welcome {
-    text-align: center;
-    padding: 15px 0;
-}
-
-.welcome h2 {
-    color: #477c64;
-}
-
-.secondary {
     background: #e9f0eb;
     color: #315a43;
-    border: none;
-    padding: 13px;
-    border-radius: 8px;
-    width: 100%;
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 20px;
+    padding: 25px 10px;
+    font-size: 18px;
 }
 
-#userName {
-    font-weight: bold;
+.user-button span {
+    display: block;
+    font-size: 35px;
+    margin-bottom: 8px;
 }
+
+#dashboard { display: none; }
+
+.tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.tabs button {
+    background: #e9f0eb;
+    color: #315a43;
+}
+
+.tabs button.active {
+    background: #477c64;
+    color: white;
+}
+
+.entry {
+    border-left: 4px solid #477c64;
+    padding: 12px;
+    margin: 12px 0;
+    background: #f5f8f5;
+    border-radius: 8px;
+    overflow-wrap: anywhere;
+}
+
+.entry h3 { margin: 0 0 8px; }
+
+.entry small {
+    color: #718078;
+}
+
+.entry p {
+    margin: 7px 0;
+}
+
+.entry button {
+    padding: 8px;
+    font-size: 13px;
+}
+
+#message {
+    display: none;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow-wrap: anywhere;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+.user-info {
+    color: #477c64;
+    font-weight: bold;
+    text-align: center;
+}
+
+.hidden { display: none; }
 
 </style>
 </head>
@@ -125,54 +170,151 @@ h2 {
 
 <header>
     <h1>📖 Diário da Diana</h1>
-    <p>Registro alimentar e intestinal da Diana ❤️</p>
+    <p>Registro alimentar e intestinal ❤️</p>
 </header>
 
-<!-- ESCOLHA DO USUÁRIO -->
+<div id="selection" class="card">
 
-<div class="card" id="selection">
-
-    <h2>Quem está acessando?</h2>
+    <h2 style="text-align:center">Quem está acessando?</h2>
 
     <div class="users">
-
         <button class="user-button" onclick="selectUser('Silas')">
-            <span class="avatar">👨</span>
-            Silas
+            <span>👨</span>Silas
         </button>
 
         <button class="user-button" onclick="selectUser('Flávia')">
-            <span class="avatar">👩</span>
-            Flávia
+            <span>👩</span>Flávia
         </button>
-
     </div>
 
 </div>
 
-<!-- PAINEL PRINCIPAL -->
+<div id="dashboard">
 
-<div class="card" id="dashboard">
-
-    <div class="welcome">
-
-        <div style="font-size:50px;">❤️</div>
-
-        <h2>Bem-vindo ao Diário da Diana!</h2>
-
-        <p>
-            Olá, <span id="userName"></span>!
+    <div class="card">
+        <p class="user-info">
+            Diário da Diana · <span id="userName"></span>
         </p>
 
-        <p>
-            Você está acessando o diário da Diana.
-        </p>
+        <button class="secondary" onclick="changeUser()">
+            Trocar usuário
+        </button>
+    </div>
+
+    <div class="card">
+
+        <h2>📝 Novo registro</h2>
+
+        <div class="tabs">
+            <button id="foodTab" class="active"
+                onclick="changeType('food')">
+                🍎 Alimentação
+            </button>
+
+            <button id="stoolTab"
+                onclick="changeType('stool')">
+                💩 Evacuação
+            </button>
+        </div>
+
+        <div id="message"></div>
+
+        <form id="entryForm">
+
+            <label>Data</label>
+            <input type="date" id="entryDate" required>
+
+            <label>Horário</label>
+            <input type="time" id="entryTime" required>
+
+            <div id="foodFields">
+
+                <label>Tipo de refeição</label>
+                <select id="mealType">
+                    <option value="Café da manhã">Café da manhã</option>
+                    <option value="Lanche da manhã">Lanche da manhã</option>
+                    <option value="Almoço">Almoço</option>
+                    <option value="Lanche da tarde">Lanche da tarde</option>
+                    <option value="Jantar">Jantar</option>
+                    <option value="Ceia">Ceia</option>
+                    <option value="Mamadeira">Mamadeira</option>
+                    <option value="Outro">Outro</option>
+                </select>
+
+                <label>Alimentos consumidos</label>
+                <textarea id="foodDescription"
+                    placeholder="Ex: arroz, feijão, frango e cenoura"></textarea>
+
+                <label>Quantidade aproximada</label>
+                <input id="foodQuantity"
+                    placeholder="Ex: 3 colheres, 150 ml">
+
+            </div>
+
+            <div id="stoolFields" class="hidden">
+
+                <label>Consistência das fezes</label>
+                <select id="consistency">
+                    <option value="Formadas">Formadas</option>
+                    <option value="Pastosas">Pastosas</option>
+                    <option value="Líquidas">Líquidas</option>
+                    <option value="Duras">Duras</option>
+                    <option value="Ressecadas / bolinhas">Ressecadas / bolinhas</option>
+                </select>
+
+                <label>Cor</label>
+                <select id="stoolColor">
+                    <option value="Marrom">Marrom</option>
+                    <option value="Amarelada">Amarelada</option>
+                    <option value="Esverdeada">Esverdeada</option>
+                    <option value="Clara">Clara</option>
+                    <option value="Escura">Escura</option>
+                    <option value="Avermelhada">Avermelhada</option>
+                    <option value="Outra">Outra</option>
+                </select>
+
+                <label>Quantidade</label>
+                <select id="stoolQuantity">
+                    <option value="Pequena">Pequena</option>
+                    <option value="Média">Média</option>
+                    <option value="Grande">Grande</option>
+                </select>
+
+                <label>Muco ou sangue?</label>
+                <select id="symptoms">
+                    <option value="Nenhum">Nenhum</option>
+                    <option value="Muco">Muco</option>
+                    <option value="Sangue">Sangue</option>
+                    <option value="Muco e sangue">Muco e sangue</option>
+                </select>
+
+            </div>
+
+            <label>Observações</label>
+            <textarea id="notes"
+                placeholder="Outras informações importantes..."></textarea>
+
+            <button type="submit" id="saveButton">
+                Salvar registro
+            </button>
+
+        </form>
 
     </div>
 
-    <button class="secondary" onclick="changeUser()">
-        Trocar usuário
-    </button>
+    <div class="card">
+
+        <h2>📚 Histórico</h2>
+
+        <button class="secondary" onclick="loadEntries()">
+            🔄 Atualizar histórico
+        </button>
+
+        <div id="history">
+            Carregando registros...
+        </div>
+
+    </div>
 
 </div>
 
@@ -180,7 +322,7 @@ h2 {
 
 <script>
 
-// CONFIGURAÇÃO SUPABASE
+// SUPABASE
 
 const SUPABASE_URL =
 "https://usjfxujtvzsyccuplwtv.supabase.co";
@@ -188,67 +330,256 @@ const SUPABASE_URL =
 const SUPABASE_KEY =
 "sb_publishable_nwGlDWcWFP2-uFH50_ZZLA_UklPEf7M";
 
-const supabaseClient = window.supabase.createClient(
+const db = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
+
+// ESTADO
+
+let currentUser = null;
+let currentType = "food";
 
 // ELEMENTOS
 
 const selection = document.getElementById("selection");
 const dashboard = document.getElementById("dashboard");
-const userName = document.getElementById("userName");
+const foodFields = document.getElementById("foodFields");
+const stoolFields = document.getElementById("stoolFields");
+const history = document.getElementById("history");
 
-// SELECIONAR USUÁRIO
+// DATA E HORA
+
+function setDateTime() {
+    const now = new Date();
+
+    const localDate = new Date(
+        now.getTime() - now.getTimezoneOffset() * 60000
+    );
+
+    document.getElementById("entryDate").value =
+        localDate.toISOString().slice(0, 10);
+
+    document.getElementById("entryTime").value =
+        localDate.toISOString().slice(11, 16);
+}
+
+// USUÁRIO
 
 function selectUser(name) {
-
-    if (name !== "Silas" && name !== "Flávia") {
-        return;
-    }
+    currentUser = name;
 
     localStorage.setItem("diario_usuario", name);
 
-    showDashboard(name);
-}
-
-// MOSTRAR PAINEL
-
-function showDashboard(name) {
+    document.getElementById("userName").textContent = name;
 
     selection.style.display = "none";
     dashboard.style.display = "block";
 
-    userName.textContent = name;
-
+    setDateTime();
+    loadEntries();
 }
 
-// TROCAR USUÁRIO
-
 function changeUser() {
+    currentUser = null;
 
     localStorage.removeItem("diario_usuario");
 
     dashboard.style.display = "none";
     selection.style.display = "block";
+}
+
+// TIPO DE REGISTRO
+
+function changeType(type) {
+    currentType = type;
+
+    foodFields.classList.toggle("hidden", type !== "food");
+    stoolFields.classList.toggle("hidden", type !== "stool");
+
+    document.getElementById("foodTab")
+        .classList.toggle("active", type === "food");
+
+    document.getElementById("stoolTab")
+        .classList.toggle("active", type === "stool");
+}
+
+// MENSAGENS
+
+function showMessage(text, success = false) {
+    const box = document.getElementById("message");
+
+    box.style.display = "block";
+    box.style.background = success ? "#e0f3e5" : "#ffe5e5";
+    box.style.color = success ? "#245d36" : "#9b2525";
+    box.textContent = text;
+}
+
+// SALVAR REGISTRO
+
+document.getElementById("entryForm")
+.addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    if (!currentUser) return;
+
+    const button = document.getElementById("saveButton");
+
+    button.disabled = true;
+    button.textContent = "Salvando...";
+
+    const record = {
+        created_by: currentUser,
+        entry_date: document.getElementById("entryDate").value,
+        entry_time: document.getElementById("entryTime").value,
+        type: currentType,
+        meal_type: currentType === "food"
+            ? document.getElementById("mealType").value : null,
+        description: currentType === "food"
+            ? document.getElementById("foodDescription").value : null,
+        quantity: currentType === "food"
+            ? document.getElementById("foodQuantity").value
+            : document.getElementById("stoolQuantity").value,
+        consistency: currentType === "stool"
+            ? document.getElementById("consistency").value : null,
+        color: currentType === "stool"
+            ? document.getElementById("stoolColor").value : null,
+        symptoms: currentType === "stool"
+            ? document.getElementById("symptoms").value : null,
+        notes: document.getElementById("notes").value
+    };
+
+    const { error } = await db
+        .from("diary_entries")
+        .insert(record);
+
+    button.disabled = false;
+    button.textContent = "Salvar registro";
+
+    if (error) {
+        showMessage("Erro ao salvar: " + error.message);
+        return;
+    }
+
+    showMessage("Registro salvo com sucesso! ❤️", true);
+
+    document.getElementById("entryForm").reset();
+
+    setDateTime();
+    loadEntries();
+
+});
+
+// ESCAPAR HTML
+
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+    })[char]);
+}
+
+// CARREGAR HISTÓRICO
+
+async function loadEntries() {
+
+    history.textContent = "Carregando...";
+
+    const { data, error } = await db
+        .from("diary_entries")
+        .select("*")
+        .order("entry_date", { ascending: false })
+        .order("entry_time", { ascending: false })
+        .limit(100);
+
+    if (error) {
+        history.textContent = "Erro ao carregar: " + error.message;
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        history.textContent = "Nenhum registro realizado ainda.";
+        return;
+    }
+
+    history.innerHTML = data.map(item => {
+
+        const isFood = item.type === "food";
+
+        return `
+        <div class="entry">
+
+            <h3>${isFood ? "🍎 Alimentação" : "💩 Evacuação"}</h3>
+
+            <small>
+                ${escapeHTML(item.entry_date)}
+                às ${escapeHTML(item.entry_time)}
+                · Por ${escapeHTML(item.created_by)}
+            </small>
+
+            ${isFood ? `
+                <p><b>Refeição:</b> ${escapeHTML(item.meal_type)}</p>
+                <p><b>Alimentos:</b> ${escapeHTML(item.description)}</p>
+                <p><b>Quantidade:</b> ${escapeHTML(item.quantity)}</p>
+            ` : `
+                <p><b>Consistência:</b> ${escapeHTML(item.consistency)}</p>
+                <p><b>Cor:</b> ${escapeHTML(item.color)}</p>
+                <p><b>Quantidade:</b> ${escapeHTML(item.quantity)}</p>
+                <p><b>Muco/sangue:</b> ${escapeHTML(item.symptoms)}</p>
+            `}
+
+            ${item.notes ? `
+                <p><b>Observações:</b> ${escapeHTML(item.notes)}</p>
+            ` : ""}
+
+            <button class="danger"
+                onclick="deleteEntry('${item.id}')">
+                Excluir registro
+            </button>
+
+        </div>
+        `;
+
+    }).join("");
 
 }
 
-// VERIFICAR ÚLTIMO USUÁRIO
+// EXCLUIR REGISTRO
 
-function checkUser() {
+async function deleteEntry(id) {
 
-    const savedUser = localStorage.getItem("diario_usuario");
+    if (!confirm("Deseja excluir este registro?")) return;
 
-    if (savedUser === "Silas" || savedUser === "Flávia") {
-        showDashboard(savedUser);
+    const { error } = await db
+        .from("diary_entries")
+        .delete()
+        .eq("id", id);
+
+    if (error) {
+        alert("Erro ao excluir: " + error.message);
+        return;
     }
 
+    loadEntries();
 }
 
 // INICIALIZAÇÃO
 
-checkUser();
+function initialize() {
+
+    const savedUser = localStorage.getItem("diario_usuario");
+
+    if (savedUser === "Silas" || savedUser === "Flávia") {
+        selectUser(savedUser);
+    }
+
+}
+
+initialize();
 
 </script>
 

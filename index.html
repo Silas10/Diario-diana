@@ -9,7 +9,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-* { box-sizing: border-box; }
+* {
+    box-sizing: border-box;
+}
 
 body {
     margin: 0;
@@ -21,68 +23,99 @@ body {
 
 .container {
     max-width: 500px;
-    margin: 30px auto;
+    margin: 35px auto;
 }
 
 header {
     background: white;
-    padding: 20px;
-    border-radius: 12px;
+    padding: 25px;
+    border-radius: 15px;
     margin-bottom: 20px;
+    text-align: center;
 }
 
-header h1 { margin: 0 0 8px; }
+header h1 {
+    margin: 0 0 10px;
+    font-size: 27px;
+}
 
-header p { margin: 0; color: #718078; }
+header p {
+    margin: 0;
+    color: #718078;
+}
 
 .card {
     background: white;
-    padding: 22px;
-    border-radius: 12px;
+    padding: 25px;
+    border-radius: 15px;
     box-shadow: 0 2px 10px #0000000a;
 }
 
-h2 { margin-top: 0; }
-
-input, button {
-    width: 100%;
-    padding: 13px;
-    margin: 8px 0;
-    border-radius: 7px;
-    font-size: 15px;
+h2 {
+    margin-top: 0;
+    text-align: center;
 }
 
-input { border: 1px solid #d5ddd7; }
+.users {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 25px;
+}
 
-button {
-    border: none;
-    background: #477c64;
-    color: white;
+.user-button {
+    background: #f0f5f1;
+    color: #315a43;
+    border: 2px solid #e0e9e2;
+    border-radius: 12px;
+    padding: 25px 10px;
+    font-size: 18px;
     font-weight: bold;
     cursor: pointer;
+    transition: .2s;
 }
 
-button:disabled {
-    opacity: .6;
-    cursor: wait;
+.user-button:hover {
+    background: #dcebe0;
+    border-color: #477c64;
+}
+
+.avatar {
+    display: block;
+    font-size: 40px;
+    margin-bottom: 12px;
+}
+
+#dashboard {
+    display: none;
+}
+
+.welcome {
+    text-align: center;
+    padding: 15px 0;
+}
+
+.welcome h2 {
+    color: #477c64;
 }
 
 .secondary {
     background: #e9f0eb;
     color: #315a43;
+    border: none;
+    padding: 13px;
+    border-radius: 8px;
+    width: 100%;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
 }
 
-#message {
-    margin-top: 15px;
-    padding: 12px;
-    border-radius: 7px;
-    display: none;
-    overflow-wrap: anywhere;
+#userName {
+    font-weight: bold;
 }
 
-#dashboard { display: none; }
-
-.logout { background: #a44d4d; }
 </style>
 </head>
 
@@ -92,58 +125,53 @@ button:disabled {
 
 <header>
     <h1>📖 Diário da Diana</h1>
-    <p>Registro alimentar e intestinal da família</p>
+    <p>Registro alimentar e intestinal da Diana ❤️</p>
 </header>
 
-<div class="card" id="login">
+<!-- ESCOLHA DO USUÁRIO -->
 
-    <h2>Acessar</h2>
+<div class="card" id="selection">
 
-    <form id="authForm">
+    <h2>Quem está acessando?</h2>
 
-        <label>E-mail</label>
-        <input
-            type="email"
-            id="email"
-            placeholder="Seu e-mail"
-            autocomplete="email"
-            required
-        >
+    <div class="users">
 
-        <label>Senha</label>
-        <input
-            type="password"
-            id="password"
-            placeholder="Sua senha (mínimo 6 caracteres)"
-            autocomplete="current-password"
-            minlength="6"
-            required
-        >
-
-        <button type="submit" id="loginBtn">
-            Entrar
+        <button class="user-button" onclick="selectUser('Silas')">
+            <span class="avatar">👨</span>
+            Silas
         </button>
 
-    </form>
+        <button class="user-button" onclick="selectUser('Flávia')">
+            <span class="avatar">👩</span>
+            Flávia
+        </button>
 
-    <button type="button" class="secondary" id="signupBtn">
-        Criar conta
-    </button>
-
-    <div id="message"></div>
+    </div>
 
 </div>
 
+<!-- PAINEL PRINCIPAL -->
+
 <div class="card" id="dashboard">
 
-    <h2>Bem-vindo ao Diário da Diana! ❤️</h2>
+    <div class="welcome">
 
-    <p id="userEmail"></p>
+        <div style="font-size:50px;">❤️</div>
 
-    <p>Você está conectado.</p>
+        <h2>Bem-vindo ao Diário da Diana!</h2>
 
-    <button class="logout" id="logoutBtn">
-        Sair da conta
+        <p>
+            Olá, <span id="userName"></span>!
+        </p>
+
+        <p>
+            Você está acessando o diário da Diana.
+        </p>
+
+    </div>
+
+    <button class="secondary" onclick="changeUser()">
+        Trocar usuário
     </button>
 
 </div>
@@ -152,7 +180,7 @@ button:disabled {
 
 <script>
 
-// CONFIGURAÇÃO DO SUPABASE
+// CONFIGURAÇÃO SUPABASE
 
 const SUPABASE_URL =
 "https://usjfxujtvzsyccuplwtv.supabase.co";
@@ -167,171 +195,60 @@ const supabaseClient = window.supabase.createClient(
 
 // ELEMENTOS
 
-const login = document.getElementById("login");
+const selection = document.getElementById("selection");
 const dashboard = document.getElementById("dashboard");
-const message = document.getElementById("message");
-const loginBtn = document.getElementById("loginBtn");
-const signupBtn = document.getElementById("signupBtn");
+const userName = document.getElementById("userName");
 
-function showMessage(text, success = false) {
-    message.style.display = "block";
-    message.style.background = success ? "#e0f3e5" : "#ffe5e5";
-    message.style.color = success ? "#245d36" : "#9b2525";
-    message.textContent = text;
+// SELECIONAR USUÁRIO
+
+function selectUser(name) {
+
+    if (name !== "Silas" && name !== "Flávia") {
+        return;
+    }
+
+    localStorage.setItem("diario_usuario", name);
+
+    showDashboard(name);
 }
 
-function setLoading(loading, action = "login") {
-    loginBtn.disabled = loading;
-    signupBtn.disabled = loading;
+// MOSTRAR PAINEL
 
-    loginBtn.textContent =
-        loading && action === "login" ? "Entrando..." : "Entrar";
+function showDashboard(name) {
 
-    signupBtn.textContent =
-        loading && action === "signup" ? "Criando conta..." : "Criar conta";
-}
-
-function showDashboard(user) {
-    login.style.display = "none";
+    selection.style.display = "none";
     dashboard.style.display = "block";
 
-    document.getElementById("userEmail").textContent =
-        "Conta: " + user.email;
+    userName.textContent = name;
+
 }
 
-// CADASTRO
+// TROCAR USUÁRIO
 
-signupBtn.addEventListener("click", async () => {
+function changeUser() {
 
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-
-    message.style.display = "none";
-
-    if (!email || !password) {
-        showMessage("Preencha o e-mail e a senha.");
-        return;
-    }
-
-    if (password.length < 6) {
-        showMessage("A senha precisa ter pelo menos 6 caracteres.");
-        return;
-    }
-
-    setLoading(true, "signup");
-
-    try {
-
-        const { data, error } = await supabaseClient.auth.signUp({
-            email: email,
-            password: password
-        });
-
-        if (error) {
-            showMessage("Erro no cadastro: " + error.message);
-            return;
-        }
-
-        if (data.session) {
-            showMessage("Conta criada com sucesso!", true);
-            showDashboard(data.user);
-        } else {
-            showMessage(
-                "Cadastro realizado! Verifique seu e-mail para confirmar a conta antes de entrar.",
-                true
-            );
-        }
-
-    } catch (error) {
-        showMessage("Falha de conexão: " + error.message);
-    } finally {
-        setLoading(false);
-    }
-
-});
-
-// LOGIN
-
-document.getElementById("authForm").addEventListener("submit", async (event) => {
-
-    event.preventDefault();
-
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-
-    message.style.display = "none";
-    setLoading(true, "login");
-
-    try {
-
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
-
-        if (error) {
-            showMessage("Erro ao entrar: " + error.message);
-            return;
-        }
-
-        showDashboard(data.user);
-
-    } catch (error) {
-        showMessage("Falha de conexão: " + error.message);
-    } finally {
-        setLoading(false);
-    }
-
-});
-
-// SAIR
-
-document.getElementById("logoutBtn").addEventListener("click", async () => {
-
-    const { error } = await supabaseClient.auth.signOut();
-
-    if (error) {
-        alert("Erro ao sair: " + error.message);
-        return;
-    }
+    localStorage.removeItem("diario_usuario");
 
     dashboard.style.display = "none";
-    login.style.display = "block";
-    message.style.display = "none";
+    selection.style.display = "block";
 
-});
+}
 
-// VERIFICAR SESSÃO
+// VERIFICAR ÚLTIMO USUÁRIO
 
-async function checkSession() {
+function checkUser() {
 
-    try {
-        const { data, error } = await supabaseClient.auth.getSession();
+    const savedUser = localStorage.getItem("diario_usuario");
 
-        if (error) {
-            showMessage(error.message);
-            return;
-        }
-
-        if (data.session) {
-            showDashboard(data.session.user);
-        }
-
-    } catch (error) {
-        showMessage("Erro ao verificar sessão: " + error.message);
+    if (savedUser === "Silas" || savedUser === "Flávia") {
+        showDashboard(savedUser);
     }
 
 }
 
-supabaseClient.auth.onAuthStateChange((event, session) => {
+// INICIALIZAÇÃO
 
-    if (session) {
-        showDashboard(session.user);
-    }
-
-});
-
-checkSession();
+checkUser();
 
 </script>
 

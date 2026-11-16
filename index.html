@@ -7,6 +7,7 @@
 <title>Diário da Diana</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 
 <style>
 * { box-sizing: border-box; }
@@ -72,9 +73,14 @@ button:disabled { opacity: .5; }
     color: #315a43;
 }
 
-.danger {
-    background: #a44d4d;
+.report-button {
+    background: #477c64;
+    color: white;
+    padding: 16px;
+    font-size: 16px;
 }
+
+.danger { background: #a44d4d; }
 
 .users {
     display: grid;
@@ -125,13 +131,8 @@ button:disabled { opacity: .5; }
 
 .entry h3 { margin: 0 0 8px; }
 
-.entry small {
-    color: #718078;
-}
-
-.entry p {
-    margin: 7px 0;
-}
+.entry small { color: #718078; }
+.entry p { margin: 7px 0; }
 
 .entry button {
     padding: 8px;
@@ -160,6 +161,22 @@ label {
 }
 
 .hidden { display: none; }
+
+.report-period {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.report-period label {
+    font-size: 13px;
+}
+
+.report-info {
+    font-size: 13px;
+    color: #718078;
+    line-height: 1.5;
+}
 
 </style>
 </head>
@@ -302,6 +319,48 @@ label {
 
     </div>
 
+    <!-- NOVA ÁREA DE RELATÓRIOS -->
+
+    <div class="card">
+
+        <h2>📊 Relatórios da Diana</h2>
+
+        <p class="report-info">
+            Selecione o período desejado para gerar um relatório
+            completo dos registros alimentares e intestinais.
+        </p>
+
+        <div class="report-period">
+
+            <div>
+                <label>Data inicial</label>
+                <input type="date" id="reportStart">
+            </div>
+
+            <div>
+                <label>Data final</label>
+                <input type="date" id="reportEnd">
+            </div>
+
+        </div>
+
+        <button class="report-button"
+            id="generateReportButton"
+            onclick="generateReport()">
+
+            📄 Gerar relatório em PDF
+
+        </button>
+
+        <p class="report-info">
+            O relatório incluirá alimentação, evacuações,
+            observações, horários e responsáveis pelos registros.
+        </p>
+
+        <div id="reportMessage" class="report-info"></div>
+
+    </div>
+
     <div class="card">
 
         <h2>📚 Histórico</h2>
@@ -350,18 +409,26 @@ const history = document.getElementById("history");
 
 // DATA E HORA
 
+function localDateString(date) {
+    const local = new Date(
+        date.getTime() - date.getTimezoneOffset() * 60000
+    );
+    return local.toISOString().slice(0, 10);
+}
+
 function setDateTime() {
     const now = new Date();
+    const date = localDateString(now);
 
-    const localDate = new Date(
-        now.getTime() - now.getTimezoneOffset() * 60000
-    );
-
-    document.getElementById("entryDate").value =
-        localDate.toISOString().slice(0, 10);
-
+    document.getElementById("entryDate").value = date;
     document.getElementById("entryTime").value =
-        localDate.toISOString().slice(11, 16);
+        now.toTimeString().slice(0, 5);
+
+    // Período padrão: mês atual
+    document.getElementById("reportStart").value =
+        date.slice(0, 8) + "01";
+
+    document.getElementById("reportEnd").value = date;
 }
 
 // USUÁRIO
@@ -545,6 +612,283 @@ async function loadEntries() {
         `;
 
     }).join("");
+
+}
+
+// =====================================
+// GERAR RELATÓRIO PDF
+// =====================================
+
+async function generateReport() {
+
+    const start = document.getElementById("reportStart").value;
+    const end = document.getElementById("reportEnd").value;
+
+    const button = document.getElementById("generateReportButton");
+    const reportMessage = document.getElementById("reportMessage");
+
+    if (!start || !end) {
+        reportMessage.textContent = "Selecione as duas datas.";
+        return;
+    }
+
+    if (start > end) {
+        reportMessage.textContent =
+            "A data inicial não pode ser posterior à data final.";
+        return;
+    }
+
+    if (!window.jspdf) {
+        reportMessage.textContent =
+            "Não foi possível carregar o gerador de PDF. Verifique sua conexão.";
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Consultando registros...";
+
+    reportMessage.textContent = "";
+
+    try {
+
+        // Consulta todos os registros do período.
+        // Não limita a quantidade a 100.
+
+        let allEntries = [];
+        let from = 0;
+        const pageSize = 500;
+
+        while (true) {
+
+            const { data, error } = await db
+                .from("diary_entries")
+                .select("*")
+                .gte("entry_date", start)
+                .lte("entry_date", end)
+                .order("entry_date", { ascending: true })
+                .order("entry_time", { ascending: true })
+                .range(from, from + pageSize - 1);
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) break;
+
+            allEntries = allEntries.concat(data);
+
+            if (data.length < pageSize) break;
+
+            from += pageSize;
+        }
+
+        if (allEntries.length === 0) {
+            reportMessage.textContent =
+                "Nenhum registro encontrado nesse período.";
+            return;
+        }
+
+        button.textContent = "Preparando PDF...";
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+
+        const margin = 15;
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const maxWidth = pageWidth - margin * 2;
+
+        let y = 20;
+
+        function addPageIfNeeded(height = 10) {
+            if (y + height > pageHeight - 18) {
+                pdf.addPage();
+                y = 20;
+            }
+        }
+
+        function addTitle(text) {
+            addPageIfNeeded(12);
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(12);
+            pdf.text(text, margin, y);
+            y += 8;
+        }
+
+        function addText(text, size = 10) {
+
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(size);
+
+            const lines = pdf.splitTextToSize(
+                String(text || "-"),
+                maxWidth
+            );
+
+            addPageIfNeeded(lines.length * 5 + 3);
+
+            pdf.text(lines, margin, y);
+
+            y += lines.length * 5 + 2;
+        }
+
+        // TÍTULO
+
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(20);
+        pdf.text("Diario da Diana", margin, y);
+
+        y += 10;
+
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(10);
+
+        pdf.text("Relatorio alimentar e intestinal", margin, y);
+
+        y += 8;
+
+        pdf.text(
+            "Periodo: " + formatDate(start) + " a " + formatDate(end),
+            margin,
+            y
+        );
+
+        y += 12;
+
+        // RESUMO
+
+        const foods = allEntries.filter(e => e.type === "food");
+        const stools = allEntries.filter(e => e.type === "stool");
+
+        const silas = allEntries.filter(e => e.created_by === "Silas");
+        const flavia = allEntries.filter(e => e.created_by === "Flávia");
+
+        addTitle("1. RESUMO DO PERIODO");
+
+        addText("Total de registros: " + allEntries.length);
+        addText("Registros alimentares: " + foods.length);
+        addText("Registros de evacuacao: " + stools.length);
+        addText("Registros feitos por Silas: " + silas.length);
+        addText("Registros feitos por Flavia: " + flavia.length);
+
+        y += 5;
+
+        // ALIMENTAÇÃO
+
+        addTitle("2. REGISTROS DE ALIMENTACAO");
+
+        if (foods.length === 0) {
+            addText("Nenhum registro alimentar no periodo.");
+        }
+
+        foods.forEach((item, index) => {
+
+            addPageIfNeeded(35);
+
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(10);
+
+            addText(
+                (index + 1) + ". " +
+                formatDate(item.entry_date) +
+                " - " + (item.entry_time || ""),
+                10
+            );
+
+            addText("Responsavel: " + (item.created_by || "-"));
+            addText("Refeicao: " + (item.meal_type || "-"));
+            addText("Alimentos: " + (item.description || "-"));
+            addText("Quantidade: " + (item.quantity || "-"));
+
+            if (item.notes) {
+                addText("Observacoes: " + item.notes);
+            }
+
+            y += 4;
+        });
+
+        // EVACUAÇÕES
+
+        addTitle("3. REGISTROS DE EVACUACAO");
+
+        if (stools.length === 0) {
+            addText("Nenhum registro de evacuacao no periodo.");
+        }
+
+        stools.forEach((item, index) => {
+
+            addPageIfNeeded(35);
+
+            addText(
+                (index + 1) + ". " +
+                formatDate(item.entry_date) +
+                " - " + (item.entry_time || ""),
+                10
+            );
+
+            addText("Responsavel: " + (item.created_by || "-"));
+            addText("Consistencia: " + (item.consistency || "-"));
+            addText("Cor: " + (item.color || "-"));
+            addText("Quantidade: " + (item.quantity || "-"));
+            addText("Muco ou sangue: " + (item.symptoms || "-"));
+
+            if (item.notes) {
+                addText("Observacoes: " + item.notes);
+            }
+
+            y += 4;
+        });
+
+        // RODAPÉ EM TODAS AS PÁGINAS
+
+        const totalPages = pdf.internal.getNumberOfPages();
+
+        for (let i = 1; i <= totalPages; i++) {
+
+            pdf.setPage(i);
+
+            pdf.setFontSize(8);
+            pdf.setFont("helvetica", "normal");
+
+            pdf.text(
+                "Diario da Diana - Pagina " + i + " de " + totalPages,
+                pageWidth / 2,
+                pageHeight - 8,
+                { align: "center" }
+            );
+        }
+
+        const filename =
+            "Diario_Diana_" + start + "_a_" + end + ".pdf";
+
+        pdf.save(filename);
+
+        reportMessage.textContent =
+            "Relatorio gerado com sucesso! ❤️";
+
+    } catch (error) {
+
+        console.error(error);
+
+        reportMessage.textContent =
+            "Erro ao gerar relatorio: " + error.message;
+
+    } finally {
+
+        button.disabled = false;
+        button.textContent = "📄 Gerar relatório em PDF";
+
+    }
+
+}
+
+// FORMATAR DATA
+
+function formatDate(date) {
+
+    if (!date) return "-";
+
+    const parts = date.split("-");
+
+    return parts[2] + "/" + parts[1] + "/" + parts[0];
 
 }
 
